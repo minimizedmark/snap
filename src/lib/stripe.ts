@@ -7,15 +7,28 @@ if (!STRIPE_SECRET_KEY) {
   console.warn('⚠️  Stripe secret key not configured');
 }
 
-export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: '2025-02-24.acacia',
-  typescript: true,
-});
+let stripeInstance: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!stripeInstance && STRIPE_SECRET_KEY) {
+    stripeInstance = new Stripe(STRIPE_SECRET_KEY, {
+      apiVersion: '2025-02-24.acacia',
+      typescript: true,
+    });
+  }
+  if (!stripeInstance) {
+    throw new Error('Stripe client not configured');
+  }
+  return stripeInstance;
+}
+
+export const stripe = getStripeClient;
 
 /**
  * Creates a Stripe customer
  */
 export async function createStripeCustomer(email: string): Promise<string> {
+  const stripe = getStripeClient();
   const customer = await stripe.customers.create({
     email,
     metadata: {
@@ -34,6 +47,7 @@ export async function createPaymentIntent(
   customerId: string,
   metadata?: Record<string, string>
 ): Promise<{ clientSecret: string; paymentIntentId: string }> {
+  const stripe = getStripeClient();
   const paymentIntent = await stripe.paymentIntents.create({
     amount: Math.round(amount * 100), // Convert to cents
     currency: 'usd',
@@ -60,6 +74,7 @@ export async function attachPaymentMethod(
   paymentMethodId: string,
   customerId: string
 ): Promise<void> {
+  const stripe = getStripeClient();
   await stripe.paymentMethods.attach(paymentMethodId, {
     customer: customerId,
   });
@@ -81,6 +96,7 @@ export async function chargePaymentMethod(
   amount: number,
   description: string
 ): Promise<string> {
+  const stripe = getStripeClient();
   const paymentIntent = await stripe.paymentIntents.create({
     amount: Math.round(amount * 100),
     currency: 'usd',
@@ -105,6 +121,7 @@ export function validateStripeWebhook(payload: string, signature: string): Strip
     throw new Error('Stripe webhook secret not configured');
   }
 
+  const stripe = getStripeClient();
   return stripe.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
 }
 
@@ -112,6 +129,7 @@ export function validateStripeWebhook(payload: string, signature: string): Strip
  * Gets payment method details
  */
 export async function getPaymentMethod(paymentMethodId: string) {
+  const stripe = getStripeClient();
   return await stripe.paymentMethods.retrieve(paymentMethodId);
 }
 
@@ -119,6 +137,7 @@ export async function getPaymentMethod(paymentMethodId: string) {
  * Lists customer's payment methods
  */
 export async function listPaymentMethods(customerId: string) {
+  const stripe = getStripeClient();
   const paymentMethods = await stripe.paymentMethods.list({
     customer: customerId,
     type: 'card',
@@ -131,5 +150,6 @@ export async function listPaymentMethods(customerId: string) {
  * Detaches a payment method from a customer
  */
 export async function detachPaymentMethod(paymentMethodId: string): Promise<void> {
+  const stripe = getStripeClient();
   await stripe.paymentMethods.detach(paymentMethodId);
 }

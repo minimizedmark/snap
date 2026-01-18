@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { fromDecimal, formatCurrency } from '@/lib/pricing';
 import { Phone, DollarSign, MessageSquare, TrendingUp } from 'lucide-react';

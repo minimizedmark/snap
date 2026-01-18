@@ -4,11 +4,17 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '';
 
-if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 64) {
-  throw new Error('ENCRYPTION_KEY must be a 32-byte hex string (64 characters)');
-}
+let KEY: Buffer | null = null;
 
-const KEY = Buffer.from(ENCRYPTION_KEY, 'hex');
+function getEncryptionKey(): Buffer {
+  if (!KEY) {
+    if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 64) {
+      throw new Error('ENCRYPTION_KEY must be a 32-byte hex string (64 characters)');
+    }
+    KEY = Buffer.from(ENCRYPTION_KEY, 'hex');
+  }
+  return KEY;
+}
 
 /**
  * Encrypts data using AES-256-GCM
@@ -16,6 +22,7 @@ const KEY = Buffer.from(ENCRYPTION_KEY, 'hex');
  * @returns Encrypted string in format: iv:authTag:encryptedData
  */
 export function encrypt(text: string): string {
+  const KEY = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, KEY, iv);
   
@@ -34,6 +41,7 @@ export function encrypt(text: string): string {
  * @returns Decrypted plain text
  */
 export function decrypt(encryptedData: string): string {
+  const KEY = getEncryptionKey();
   const parts = encryptedData.split(':');
   
   if (parts.length !== 3) {

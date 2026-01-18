@@ -7,7 +7,14 @@ if (!RESEND_API_KEY) {
   console.warn('⚠️  Resend API key not configured');
 }
 
-const resend = new Resend(RESEND_API_KEY);
+let resendInstance: Resend | null = null;
+
+function getResendClient() {
+  if (!resendInstance && RESEND_API_KEY) {
+    resendInstance = new Resend(RESEND_API_KEY);
+  }
+  return resendInstance;
+}
 
 /**
  * Sends a magic link email
@@ -17,6 +24,12 @@ export async function sendMagicLinkEmail(
   magicLink: string
 ): Promise<{ id: string } | null> {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      console.error('Resend client not configured');
+      return null;
+    }
+
     const { data, error } = await resend.emails.send({
       from: `Snapback <${FROM_EMAIL}>`,
       to,
@@ -87,6 +100,12 @@ export async function sendLowBalanceAlertEmail(
   _alertLevel: number
 ): Promise<void> {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      console.error('Resend client not configured');
+      return;
+    }
+
     await resend.emails.send({
       from: `Snapback Alerts <${FROM_EMAIL}>`,
       to,
@@ -163,6 +182,12 @@ export async function sendMissedCallNotificationEmail(
   timestamp: Date
 ): Promise<void> {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      console.error('Resend client not configured');
+      return;
+    }
+
     await resend.emails.send({
       from: `Snapback Notifications <${FROM_EMAIL}>`,
       to,
