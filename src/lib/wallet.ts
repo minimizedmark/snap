@@ -1,6 +1,5 @@
 import { prisma } from './prisma';
 import { toDecimal, fromDecimal, PRICING } from './pricing';
-import { Decimal } from '@prisma/client/runtime/library';
 
 export interface DebitWalletParams {
   userId: string;
@@ -158,22 +157,30 @@ export async function shouldSendLowBalanceAlert(
  * Records that a low balance alert was sent
  */
 export async function recordLowBalanceAlert(userId: string, alertLevel: number): Promise<void> {
-  await prisma.lowBalanceAlert.upsert({
+  // Find existing alert
+  const existing = await prisma.lowBalanceAlert.findFirst({
     where: {
-      userId_alertLevel: {
-        userId,
-        alertLevel: toDecimal(alertLevel),
-      },
-    },
-    create: {
       userId,
       alertLevel: toDecimal(alertLevel),
-      lastSentAt: new Date(),
-    },
-    update: {
-      lastSentAt: new Date(),
     },
   });
+
+  if (existing) {
+    // Update existing alert
+    await prisma.lowBalanceAlert.update({
+      where: { id: existing.id },
+      data: { lastSentAt: new Date() },
+    });
+  } else {
+    // Create new alert
+    await prisma.lowBalanceAlert.create({
+      data: {
+        userId,
+        alertLevel: toDecimal(alertLevel),
+        lastSentAt: new Date(),
+      },
+    });
+  }
 }
 
 /**
@@ -190,7 +197,6 @@ export async function processAutoReload(userId: string): Promise<boolean> {
 
   const balance = fromDecimal(wallet.balance);
   const threshold = fromDecimal(wallet.autoReloadThreshold);
-  const reloadAmount = fromDecimal(wallet.autoReloadAmount);
 
   if (balance >= threshold) {
     return false;

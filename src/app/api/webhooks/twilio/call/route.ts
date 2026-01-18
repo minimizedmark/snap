@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateCallCost, PRICING, toDecimal, fromDecimal } from '@/lib/pricing';
 import { debitWallet, shouldSendLowBalanceAlert, recordLowBalanceAlert } from '@/lib/wallet';
@@ -9,7 +9,6 @@ import {
   formatBusinessHours,
   substituteMessageVariables,
 } from '@/lib/utils';
-import { decrypt } from '@/lib/encryption';
 
 /**
  * THE MONEY PRINTER 💰

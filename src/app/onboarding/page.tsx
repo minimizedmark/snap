@@ -11,10 +11,8 @@ export default function OnboardingPage() {
 
   // Form data
   const [businessName, setBusinessName] = useState('');
-  const [timezone, setTimezone] = useState('America/New_York');
   const [hoursStart, setHoursStart] = useState('09:00');
   const [hoursEnd, setHoursEnd] = useState('17:00');
-  const [daysOpen, setDaysOpen] = useState([1, 2, 3, 4, 5]);
   const [twilioSid, setTwilioSid] = useState('');
   const [twilioToken, setTwilioToken] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');

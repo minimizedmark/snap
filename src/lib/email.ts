@@ -84,7 +84,7 @@ export async function sendLowBalanceAlertEmail(
   to: string,
   businessName: string,
   balance: number,
-  alertLevel: number
+  _alertLevel: number
 ): Promise<void> {
   try {
     await resend.emails.send({

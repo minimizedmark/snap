@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendUserSms, normalizePhoneNumber } from '@/lib/twilio';
+import { normalizePhoneNumber } from '@/lib/twilio';
 import { toDecimal } from '@/lib/pricing';
 import { debitWallet } from '@/lib/wallet';
 
