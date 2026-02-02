@@ -4,17 +4,12 @@ import { checkSystemAlerts, notifyAdmin } from '@/lib/alerts';
 /**
  * Cron job to check for critical alerts and notify admin
  * 
- * Setup with Vercel Cron (runs every 15 minutes):
- * {
- *   "crons": [{
- *     "path": "/api/cron/check-alerts",
- *     "schedule": "*/15 * * * *"
- *   }]
- * }
+ * Setup with Vercel Cron (runs every 15 minutes)
+ * Add to vercel.json in the crons array
  * 
  * Or use external cron service (cron-job.org):
  * - URL: https://yourdomain.com/api/cron/check-alerts
- * - Schedule: */15 * * * * (every 15 minutes)
+ * - Schedule: every 15 minutes
  * - Add header: Authorization: Bearer YOUR_CRON_SECRET
  */
 export async function GET(req: NextRequest) {
