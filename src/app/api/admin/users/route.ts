@@ -67,6 +67,7 @@ export async function GET(req: NextRequest) {
           wallet: true,
           businessSettings: true,
           twilioConfig: true,
+          stripeCustomer: true,
           _count: {
             select: {
               callLogs: true,
@@ -91,7 +92,7 @@ export async function GET(req: NextRequest) {
       totalCalls: user._count.callLogs,
       isActive: user.isActive,
       createdAt: user.createdAt,
-      stripeCustomerId: user.stripeCustomerId,
+      stripeCustomerId: user.stripeCustomer?.stripeCustomerId || null,
     }));
 
     return NextResponse.json({
