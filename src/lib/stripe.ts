@@ -10,14 +10,14 @@ if (!STRIPE_SECRET_KEY) {
 let stripeInstance: Stripe | null = null;
 
 function getStripeClient(): Stripe {
-  if (!stripeInstance && STRIPE_SECRET_KEY) {
+  if (!stripeInstance) {
+    if (!STRIPE_SECRET_KEY) {
+      throw new Error('Stripe secret key not configured');
+    }
     stripeInstance = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: '2025-02-24.acacia',
       typescript: true,
     });
-  }
-  if (!stripeInstance) {
-    throw new Error('Stripe client not configured');
   }
   return stripeInstance;
 }
