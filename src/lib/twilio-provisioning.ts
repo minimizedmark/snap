@@ -16,7 +16,7 @@ export async function purchaseTwilioNumber(areaCode?: string): Promise<string> {
 
   // Search for available numbers
   const availableNumbers = await client.availablePhoneNumbers('US').local.list({
-    areaCode: areaCode || undefined,
+    areaCode: areaCode ? parseInt(areaCode, 10) : undefined,
     limit: 1,
   });
 
