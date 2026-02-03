@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       id: user.id,
       email: user.email,
       businessName: user.businessSettings?.businessName || 'N/A',
-      phoneNumber: user.twilioConfig?.[0]?.phoneNumber || 'N/A',
+      phoneNumber: user.twilioConfig?.phoneNumber || 'N/A',
       subscriptionType: user.subscriptionType,
       subscriptionStatus: user.subscriptionStatus,
       setupFeePaid: user.setupFeePaid,
