@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { purchaseTwilioNumber } from '@/lib/twilio-provisioning';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-02-24.acacia',
-});
+import { stripe } from '@/lib/stripe';
 
 const NUMBER_SETUP_FEE = 5.00; // $5 one-time fee
 
@@ -42,7 +38,7 @@ export async function POST(req: NextRequest) {
     let stripeCustomerId = user.stripeCustomer?.stripeCustomerId;
     
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
+      const customer = await stripe().customers.create({
         email: user.email,
         metadata: { userId: user.id },
       });
@@ -58,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create payment intent for $5 number setup fee
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await stripe().paymentIntents.create({
       amount: NUMBER_SETUP_FEE * 100, // $5 in cents
       currency: 'usd',
       customer: stripeCustomerId,
