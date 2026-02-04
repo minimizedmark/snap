@@ -4,7 +4,14 @@ const ADMIN_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
 const ADMIN_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 
 if (!ADMIN_ACCOUNT_SID || !ADMIN_AUTH_TOKEN) {
-  throw new Error('Admin Twilio credentials required for number provisioning');
+  console.warn('⚠️  Admin Twilio credentials not configured');
+}
+
+function getTwilioClient() {
+  if (!ADMIN_ACCOUNT_SID || !ADMIN_AUTH_TOKEN) {
+    throw new Error('Admin Twilio credentials required for number provisioning');
+  }
+  return twilio(ADMIN_ACCOUNT_SID, ADMIN_AUTH_TOKEN);
 }
 
 /**
@@ -12,7 +19,7 @@ if (!ADMIN_ACCOUNT_SID || !ADMIN_AUTH_TOKEN) {
  * Returns the purchased phone number in E.164 format
  */
 export async function purchaseTwilioNumber(areaCode?: string): Promise<string> {
-  const client = twilio(ADMIN_ACCOUNT_SID!, ADMIN_AUTH_TOKEN!);
+  const client = getTwilioClient();
 
   // Search for available numbers
   const availableNumbers = await client.availablePhoneNumbers('US').local.list({
@@ -44,7 +51,7 @@ export async function purchaseTwilioNumber(areaCode?: string): Promise<string> {
  * Release a Twilio phone number (when customer cancels)
  */
 export async function releaseTwilioNumber(phoneNumber: string): Promise<void> {
-  const client = twilio(ADMIN_ACCOUNT_SID!, ADMIN_AUTH_TOKEN!);
+  const client = getTwilioClient();
 
   // Find the number SID
   const numbers = await client.incomingPhoneNumbers.list({
