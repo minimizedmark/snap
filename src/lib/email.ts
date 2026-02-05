@@ -3,14 +3,15 @@ import { Resend } from 'resend';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@snapback.app';
 
-if (!RESEND_API_KEY) {
-  console.warn('⚠️  Resend API key not configured - emails will not be sent');
-}
-
 let resendInstance: Resend | null = null;
 
 function getResendClient() {
-  if (!resendInstance && RESEND_API_KEY) {
+  if (!RESEND_API_KEY) {
+    console.warn('⚠️  Resend API key not configured - emails will not be sent');
+    return null;
+  }
+  
+  if (!resendInstance) {
     resendInstance = new Resend(RESEND_API_KEY);
   }
   return resendInstance;
