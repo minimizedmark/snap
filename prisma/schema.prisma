@@ -40,6 +40,7 @@ model User {
   lowBalanceAlerts        LowBalanceAlert[]
   stripeCustomer          StripeCustomer?
   callLogs                CallLog[]
+  assignedPhoneNumbers    PhoneNumberInventory[]
 
   @@map("users")
   @@schema("public")
