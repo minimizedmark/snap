@@ -332,7 +332,17 @@ export default function OnboardingPage() {
                   </div>
                 )}
               </div>
-            )}p className="text-sm text-cyan-800 mb-3">
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6">
+                <div className="flex items-center space-x-3 mb-6">
+                  <DollarSign className="w-6 h-6 text-cyan-500" />
+                  <h2 className="text-2xl font-bold">Load Your Wallet</h2>
+                </div>
+
+                <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-6 mb-6">
+                  <p className="text-sm text-cyan-800 mb-3">
                     There is a <strong>$5 setup fee</strong> for your Snap Calls forwarding number. 
                     It will be deducted from your wallet.
                   </p>
