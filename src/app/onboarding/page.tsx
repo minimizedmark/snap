@@ -485,20 +485,10 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {step === 4 (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-sm text-red-900">Stripe is not configured. Please check your environment variables.</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {step === 3 && (
+            {step === 4 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
-                  <MessageSquare className="w-6 h-6 text-cyan-500" />
+                  <CheckCircle className="w-6 h-6 text-cyan-500" />
                   <h2 className="text-2xl font-bold">You're all set!</h2>
                 </div>
 
@@ -508,10 +498,10 @@ export default function OnboardingPage() {
                     Welcome to Snap Calls!
                   </h3>
                   <p className="text-green-800 mb-4">
-                    Your phone number has been set up and is ready to start responding to missed calls.
+                    Your forwarding number has been set up and is ready to start responding to missed calls.
                   </p>
                   <p className="text-sm text-green-700">
-                    Next: Add funds to your wallet and customize your message templates in the dashboard.
+                    Next: Customize your message templates in the dashboard.
                   </p>
                 </div>
 
