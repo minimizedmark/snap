@@ -85,22 +85,22 @@ export default function AdminUsersPage() {
   };
 
   const getStatusBadge = (user: User) => {
-    if (!user.isActive || user.subscriptionStatus === 'paused') {
-      return <span className="px-2 py-1 bg-red-900/50 text-red-200 text-xs rounded">Paused</span>;
+    if (!user.isActive || user.subscriptionStatus === 'paused' || user.subscriptionStatus === 'suspended') {
+      return <span className="px-2 py-1 bg-red-900/50 text-red-200 text-xs rounded">{user.subscriptionStatus === 'suspended' ? 'Suspended' : 'Paused'}</span>;
     }
-    if (user.subscriptionType === 'PUBLIC_LINE') {
-      return <span className="px-2 py-1 bg-green-900/50 text-green-200 text-xs rounded">Public Line</span>;
+    if (user.subscriptionType === 'SNAPLINE') {
+      return <span className="px-2 py-1 bg-green-900/50 text-green-200 text-xs rounded">SnapLine</span>;
     }
     return <span className="px-2 py-1 bg-cyan-900/50 text-cyan-200 text-xs rounded">Basic</span>;
   };
 
   const getUpgradeStatus = (user: User) => {
-    if (user.subscriptionType === 'PUBLIC_LINE') return null;
+    if (user.subscriptionType === 'SNAPLINE') return null;
     if (user.directCallsThisMonth >= 20) {
-      return <span className="text-red-400 text-xs">🚨 Ready for upgrade!</span>;
+      return <span className="text-red-400 text-xs">🚨 Suspended (ToS violation)</span>;
     }
-    if (user.directCallsThisMonth >= 10) {
-      return <span className="text-yellow-400 text-xs">⚠️ {user.directCallsThisMonth} calls</span>;
+    if (user.directCallsThisMonth >= 15) {
+      return <span className="text-yellow-400 text-xs">⚠️ {user.directCallsThisMonth} calls (Warning sent)</span>;
     }
     return <span className="text-gray-500 text-xs">{user.directCallsThisMonth} calls</span>;
   };
@@ -149,7 +149,7 @@ export default function AdminUsersPage() {
               {[
                 { value: 'all', label: 'All Users' },
                 { value: 'basic', label: 'Basic' },
-                { value: 'public-line', label: 'Public Line' },
+                { value: 'snapline', label: 'SnapLine' },
                 { value: 'approaching-upgrade', label: '10+ Calls' },
                 { value: 'ready-upgrade', label: '20+ Calls' },
                 { value: 'paused', label: 'Paused' },
@@ -256,7 +256,7 @@ export default function AdminUsersPage() {
                             <button
                               onClick={() => handleAction(user.id, 'manual-upgrade')}
                               className="p-1 hover:bg-gray-700 rounded"
-                              title="Manually upgrade to Public Line"
+                              title="Manually subscribe to SnapLine"
                             >
                               <TrendingUp className="w-4 h-4 text-cyan-400" />
                             </button>

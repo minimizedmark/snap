@@ -282,7 +282,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     data: {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      subscriptionType: 'PUBLIC_LINE',
+      subscriptionType: 'SNAPLINE',
     },
   });
 

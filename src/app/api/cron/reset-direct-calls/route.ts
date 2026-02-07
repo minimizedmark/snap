@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resetMonthlyDirectCallCounts } from '@/lib/subscription';
+import { resetMonthlyRegularCallCounts } from '@/lib/subscription';
 
 /**
- * Cron job to reset direct call counts on the 1st of each month
+ * Cron job to reset regular call counts on the 1st of each month
  * 
  * Setup with Vercel Cron:
  * Add to vercel.json:
@@ -32,17 +32,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await resetMonthlyDirectCallCounts();
+    await resetMonthlyRegularCallCounts();
     
-    console.log('✅ Monthly direct call counts reset successfully');
+    console.log('✅ Monthly regular call counts reset successfully');
     
     return NextResponse.json({
       success: true,
-      message: 'Direct call counts reset',
+      message: 'Regular call counts reset',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Error resetting direct call counts:', error);
+    console.error('❌ Error resetting regular call counts:', error);
     
     return NextResponse.json(
       { error: 'Failed to reset counts' },

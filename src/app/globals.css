@@ -1,30 +1,77 @@
+/* stylelint-disable at-rule-no-unknown */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
+
+/* SnapCalls Construction Branding - Custom Utilities */
+@layer components {
+  /* Signature Orange Button with White Glow (on dark backgrounds) */
+  .btn-snap-dark {
+    @apply bg-[#FF6B00] text-white border-2 border-white px-6 py-3 font-bold uppercase tracking-wide;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    transition: all 0.15s ease;
+  }
+  
+  .btn-snap-dark:hover {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    transform: scale(1.02);
+  }
+  
+  /* Orange Button on Light Backgrounds */
+  .btn-snap-light {
+    @apply bg-[#FF6B00] text-white px-6 py-3 font-bold uppercase tracking-wide;
+    transition: all 0.15s ease;
+  }
+  
+  .btn-snap-light:hover {
+    background: #E65F00;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+  }
+  
+  /* Snap Transition - Fast and Snappy */
+  .snap-transition {
+    transition: all 0.15s ease;
+  }
+  
+  /* Input Focus - Orange Ring */
+  .input-snap:focus {
+    @apply border-[#FF6B00] outline-none;
+    box-shadow: 0 0 8px rgba(255, 107, 0, 0.2);
+  }
+}
 
 @layer base {
   :root {
+    /* SnapCalls High-Vis Construction Branding */
+    --safety-orange: 18 100% 50%; /* #FF6B00 */
+    --deep-black: 0 0% 4%; /* #0A0A0A */
+    --pure-white: 0 0% 100%; /* #FFFFFF */
+    --charcoal-text: 0 0% 20%; /* #333333 */
+    --medium-grey: 0 0% 40%; /* #666666 */
+    --light-grey: 0 0% 96%; /* #F5F5F5 */
+    
     --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    --foreground: 0 0% 20%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 0 0% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 0% 0%;
+    --popover-foreground: 0 0% 20%;
+    --primary: 18 100% 50%; /* Safety Orange */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 199.5 89.1% 48.4%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 18 100% 50%; /* Safety Orange */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 0%;
-    --radius: 0.5rem;
-    --chart-1: 199.5 89.1% 48.4%;
+    --ring: 18 100% 50%; /* Safety Orange */
+    --radius: 0.25rem; /* Sharper, more industrial */
+    --chart-1: 18 100% 50%;
     --chart-2: 142.1 76.2% 36.3%;
     --chart-3: 262.1 83.3% 57.8%;
     --chart-4: 47.9 95.8% 53.1%;
@@ -32,19 +79,19 @@
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 0%;
+    --background: 0 0% 4%; /* Deep Black */
+    --foreground: 0 0% 100%; /* Pure White */
+    --card: 0 0% 4%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 0%;
+    --popover: 0 0% 4%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 14.9%;
+    --primary: 18 100% 50%; /* Safety Orange */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 199.5 89.1% 48.4%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 18 100% 50%; /* Safety Orange */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;

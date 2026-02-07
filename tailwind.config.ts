@@ -10,6 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        /* SnapCalls High-Vis Construction Brand Colors */
+        'safety-orange': '#FF6B00',
+        'deep-black': '#0A0A0A',
+        'pure-white': '#FFFFFF',
+        'charcoal-text': '#333333',
+        'medium-grey': '#666666',
+        'light-grey': '#F5F5F5',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

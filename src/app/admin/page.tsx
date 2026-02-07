@@ -20,17 +20,18 @@ interface Metrics {
   users: {
     total: number;
     basic: number;
-    publicLine: number;
+    snapLine: number;
     active: number;
     paused: number;
+    suspended: number;
     todaySignups: number;
     monthSignups: number;
   };
-  autoUpgradeFunnel: {
+  abusePrevention: {
     at10Calls: number;
     at15Calls: number;
     at20Calls: number;
-    todayUpgrades: number;
+    suspended: number;
   };
   revenue: {
     mrr: number;
@@ -419,8 +420,8 @@ export default function AdminDashboard() {
               <div className="text-sm text-gray-400">Basic Plan</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-green-400">{metrics.users.publicLine}</div>
-              <div className="text-sm text-gray-400">Public Line</div>
+              <div className="text-3xl font-bold text-green-400">{metrics.users.snapLine}</div>
+              <div className="text-sm text-gray-400">SnapLine</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-blue-400">{metrics.users.monthSignups}</div>

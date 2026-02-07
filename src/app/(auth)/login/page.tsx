@@ -92,26 +92,26 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <header className="border-b">
+      <header className="border-b-4 border-safety-orange bg-deep-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-              <Phone className="w-6 h-6 text-cyan-500" />
+            <div className="w-10 h-10 bg-safety-orange rounded flex items-center justify-center border-2 border-white" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
+              <Phone className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-black">Snap Calls</h1>
-              <p className="text-sm text-cyan-500 font-medium">It&apos;s a snap</p>
+              <h1 className="text-2xl font-bold text-white uppercase tracking-wide">Snap Calls</h1>
+              <p className="text-sm text-safety-orange font-bold uppercase tracking-wider">Never Miss A Job</p>
             </div>
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-black">Welcome back</h2>
-            <p className="mt-2 text-gray-600">
+            <h2 className="text-3xl font-bold text-deep-black uppercase tracking-wide">Welcome back</h2>
+            <p className="mt-2 text-charcoal-text font-medium">
               Sign in or create a new account with your email
             </p>
           </div>
@@ -119,7 +119,7 @@ function LoginForm() {
           {!sent ? (
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">
                   Email address
                 </label>
                 <div className="relative">
@@ -134,14 +134,14 @@ function LoginForm() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                    className="input-snap block w-full pl-10 pr-3 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
                     placeholder="you@example.com"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                <div className="bg-red-50 border-2 border-red-500 text-red-700 px-4 py-3 rounded-lg font-medium">
                   {error}
                 </div>
               )}
@@ -149,7 +149,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-cyan-500 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-snap-light w-full flex items-center justify-center px-4 py-3 border-transparent text-base font-bold uppercase tracking-wide rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
@@ -162,24 +162,24 @@ function LoginForm() {
               </button>
 
               <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  <strong>New user?</strong> We&apos;ll create your account automatically!
+                <p className="text-sm text-charcoal-text font-medium">
+                  <strong className="text-safety-orange uppercase tracking-wider">New user?</strong> We&apos;ll create your account automatically!
                 </p>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-charcoal-text mt-2 font-medium">
                   No passwords needed - just click the link we email you
                 </p>
               </div>
             </form>
           ) : (
             <div className="mt-8 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                <Mail className="w-8 h-8 text-green-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-safety-orange rounded-full mb-4 border-2 border-white" style={{boxShadow: '0 0 15px rgba(255, 107, 0, 0.4)'}}>
+                <Mail className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-black mb-2">Check your email!</h3>
-              <p className="text-gray-600 mb-4">
-                We&apos;ve sent a magic link to <strong>{email}</strong>
+              <h3 className="text-xl font-bold text-deep-black mb-2 uppercase tracking-wide">Check your email!</h3>
+              <p className="text-charcoal-text mb-4 font-medium">
+                We&apos;ve sent a magic link to <strong className="text-safety-orange">{email}</strong>
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-charcoal-text font-medium">
                 Click the link in the email to sign in. The link expires in 15 minutes.
               </p>
               <button
@@ -187,7 +187,7 @@ function LoginForm() {
                   setSent(false);
                   setEmail('');
                 }}
-                className="mt-6 text-cyan-500 hover:text-cyan-600 font-medium"
+                className="mt-6 text-safety-orange hover:underline font-bold uppercase tracking-wider"
               >
                 Use a different email
               </button>
@@ -202,12 +202,12 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-deep-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-black rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Phone className="w-10 h-10 text-cyan-500 animate-pulse" />
+          <div className="w-16 h-16 bg-safety-orange rounded flex items-center justify-center mx-auto mb-4 border-2 border-white" style={{boxShadow: '0 0 20px rgba(255, 107, 0, 0.5)'}}>
+            <Phone className="w-10 h-10 text-white animate-pulse" />
           </div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-white font-bold uppercase tracking-wider">Loading...</p>
         </div>
       </div>
     }>

@@ -2,120 +2,82 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 // Pricing constants
 export const PRICING = {
-  BASE_COST: 1.0,
-  FEATURES: {
-    SEQUENCES: 0.5,
-    RECOGNITION: 0.25,
-    TWO_WAY: 0.5,
-    VIP_PRIORITY_NON_VIP: 0.5,
-    VIP_PRIORITY_VIP: 0.25,
-    TRANSCRIPTION: 0.25,
+  // SnapCalls Basic tier: $1.00 deducted per call
+  // SnapCalls Pro tier: $1.50 deducted per call (includes voicemail transcription)
+  // Effective cost to user is lower when they load wallet with bonuses:
+  //   - $20 load (0% bonus): Basic=$1.00/call, Pro=$1.50/call
+  //   - $100 load (50% bonus): Basic=$0.67/call, Pro=$1.00/call (they got 50% more credits)
+  SNAPCALLS_BASIC: {
+    PRICE: 1.0,             // Amount deducted from wallet per call
   },
-  MESSAGE_CHANGES: {
-    FREE_PER_MONTH: 1,
-    ADDITIONAL_COST: 0.5,
+  SNAPCALLS_PRO: {
+    PRICE: 1.5,             // Amount deducted from wallet per call
   },
   WALLET_DEPOSITS: {
-    20: { bonus: 0, description: 'Minimum deposit' },
+    20: { bonus: 0, description: '0% bonus' },
     30: { bonus: 4.5, description: '15% bonus' },
     50: { bonus: 12.5, description: '25% bonus' },
     100: { bonus: 50, description: '50% bonus' },
   },
   SETUP_FEE: 5.0,
-  PUBLIC_LINE_MONTHLY: 20.0,
+  SNAPLINE_MONTHLY: 20.0,  // SnapLine subscription (full phone service)
+  ABUSE_PREVENTION: {
+    WARNING_THRESHOLD: 15,   // Warning email at 15 regular calls
+    SUSPENSION_THRESHOLD: 20, // Suspend service at 20 regular calls
+  },
   AUTO_RELOAD: {
     DEFAULT_THRESHOLD: 10.0,
     DEFAULT_AMOUNT: 20.0,
   },
-  MINIMUM_BALANCE: 1.0,
-  LOW_BALANCE_ALERTS: [10.0, 5.0, 0.0],
+  MINIMUM_BALANCE: 0.67,    // Minimum for cheapest call (Basic with max bonus)
+  LOW_BALANCE_ALERTS: [10.0, 5.0, 2.0],
 } as const;
 
+export type SnapCallsTier = 'BASIC' | 'PRO';
+
 export interface CallPricingParams {
-  isVip: boolean;
+  tier: SnapCallsTier;
   hasVoicemail: boolean;
-  sequencesEnabled: boolean;
-  recognitionEnabled: boolean;
-  twoWayEnabled: boolean;
-  vipPriorityEnabled: boolean;
-  transcriptionEnabled: boolean;
-  isRepeatCaller?: boolean;
-  customerReplied?: boolean;
 }
 
 export interface CallPricingResult {
-  baseCost: number;
-  sequencesCost: number;
-  recognitionCost: number;
-  twoWayCost: number;
-  vipPriorityCost: number;
-  transcriptionCost: number;
-  totalCost: number;
+  cost: number;
+  tier: SnapCallsTier;
 }
 
 /**
- * Calculates the total cost for a call based on enabled features and usage
+ * Calculates the cost to deduct from wallet for a call
+ * Note: The actual cost to the user is lower when they loaded wallet with bonuses.
+ * For example, with 50% bonus ($100 load gets $150 credits):
+ *   - Basic tier: $1.00 deducted, but effective cost is $0.67
+ *   - Pro tier: $1.50 deducted, but effective cost is $1.00
  */
 export function calculateCallCost(params: CallPricingParams): CallPricingResult {
-  const result: CallPricingResult = {
-    baseCost: PRICING.BASE_COST,
-    sequencesCost: 0,
-    recognitionCost: 0,
-    twoWayCost: 0,
-    vipPriorityCost: 0,
-    transcriptionCost: 0,
-    totalCost: PRICING.BASE_COST,
+  const cost = params.tier === 'BASIC' 
+    ? PRICING.SNAPCALLS_BASIC.PRICE
+    : PRICING.SNAPCALLS_PRO.PRICE;
+
+  return {
+    cost,
+    tier: params.tier,
   };
-
-  // Sequences cost - only if enabled
-  if (params.sequencesEnabled) {
-    result.sequencesCost = PRICING.FEATURES.SEQUENCES;
-  }
-
-  // Recognition cost - only if enabled AND caller is repeat caller
-  if (params.recognitionEnabled && params.isRepeatCaller) {
-    result.recognitionCost = PRICING.FEATURES.RECOGNITION;
-  }
-
-  // Two-way cost - only if enabled AND customer replied
-  if (params.twoWayEnabled && params.customerReplied) {
-    result.twoWayCost = PRICING.FEATURES.TWO_WAY;
-  }
-
-  // VIP priority cost - only if enabled
-  if (params.vipPriorityEnabled) {
-    if (params.isVip) {
-      result.vipPriorityCost = PRICING.FEATURES.VIP_PRIORITY_VIP;
-    } else {
-      result.vipPriorityCost = PRICING.FEATURES.VIP_PRIORITY_NON_VIP;
-    }
-  }
-
-  // Transcription cost - only if enabled AND voicemail exists
-  if (params.transcriptionEnabled && params.hasVoicemail) {
-    result.transcriptionCost = PRICING.FEATURES.TRANSCRIPTION;
-  }
-
-  // Calculate total
-  result.totalCost =
-    result.baseCost +
-    result.sequencesCost +
-    result.recognitionCost +
-    result.twoWayCost +
-    result.vipPriorityCost +
-    result.transcriptionCost;
-
-  return result;
 }
 
 /**
- * Calculates the message change cost
+ * Gets the effective cost per call to the user based on their wallet bonus
+ * Used for display purposes to show users their actual cost per call
+ * 
+ * Example: User loads $100, gets $150 (50% bonus)
+ * - Basic: $1.00 deducted / 1.5 = $0.67 effective cost
+ * - Pro: $1.50 deducted / 1.5 = $1.00 effective cost
  */
-export function calculateMessageChangeCost(changesUsedThisMonth: number): number {
-  if (changesUsedThisMonth < PRICING.MESSAGE_CHANGES.FREE_PER_MONTH) {
-    return 0;
-  }
-  return PRICING.MESSAGE_CHANGES.ADDITIONAL_COST;
+export function getEffectiveCallCost(tier: SnapCallsTier, bonusPercentage: number): number {
+  const deductedAmount = tier === 'BASIC' 
+    ? PRICING.SNAPCALLS_BASIC.PRICE
+    : PRICING.SNAPCALLS_PRO.PRICE;
+  
+  // Effective cost = amount deducted / (1 + bonus percentage)
+  return deductedAmount / (1 + bonusPercentage);
 }
 
 /**

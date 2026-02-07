@@ -94,12 +94,12 @@ async function processCallAsync(req: NextRequest) {
       return;
     }
 
-    // Track direct calls for auto-upgrade (BASIC plan only)
-    // If user is using this number publicly (not just for forwarding),
-    // they'll rack up calls and get auto-upgraded to PUBLIC_LINE
+    // Track regular calls for abuse prevention (BASIC plan only)
+    // If user is using this number for regular calls (not just forwarding),
+    // they'll hit warning at 15 calls and suspension at 20 calls
     if (user.subscriptionType === 'BASIC') {
-      const { incrementDirectCallCount } = await import('@/lib/subscription');
-      await incrementDirectCallCount(user.id);
+      const { incrementRegularCallCount } = await import('@/lib/subscription');
+      await incrementRegularCallCount(user.id);
     }
 
     // Check wallet balance (minimum $1.00)

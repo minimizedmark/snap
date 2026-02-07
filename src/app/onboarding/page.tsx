@@ -166,15 +166,15 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b">
+      <header className="bg-deep-black border-b border-gray-800">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-              <Phone className="w-6 h-6 text-cyan-500" />
+            <div className="w-10 h-10 bg-safety-orange rounded flex items-center justify-center border-2 border-white" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
+              <Phone className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Snap Calls</h1>
-              <p className="text-sm text-cyan-500 font-medium">Setup in a snap</p>
+              <h1 className="text-2xl font-bold text-white uppercase tracking-wide">Snap Calls</h1>
+              <p className="text-sm text-safety-orange font-bold uppercase tracking-wider">Never Miss A Job</p>
             </div>
           </div>
         </div>
@@ -186,18 +186,18 @@ export default function OnboardingPage() {
             <div className="flex items-center justify-between">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className={`flex items-center ${i < 4 ? 'flex-1' : ''}`}>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${step >= i ? 'bg-cyan-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${step >= i ? 'bg-safety-orange text-white border-2 border-white' : 'bg-gray-200 text-gray-600'}`} style={step >= i ? {boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'} : {}}>
                     {i}
                   </div>
-                  {i < 4 && <div className={`h-1 flex-1 mx-4 ${step > i ? 'bg-cyan-500' : 'bg-gray-200'}`} />}
+                  {i < 4 && <div className={`h-1 flex-1 mx-4 ${step > i ? 'bg-safety-orange' : 'bg-gray-200'}`} />}
                 </div>
               ))}
             </div>
             <div className="flex justify-between mt-2 text-sm">
-              <span className={step >= 1 ? 'text-cyan-600 font-medium' : 'text-gray-600'}>Business Info</span>
-              <span className={step >= 2 ? 'text-cyan-600 font-medium' : 'text-gray-600'}>Load Wallet</span>
-              <span className={step >= 3 ? 'text-cyan-600 font-medium' : 'text-gray-600'}>Get Number</span>
-              <span className={step >= 4 ? 'text-cyan-600 font-medium' : 'text-gray-600'}>Complete</span>
+              <span className={step >= 1 ? 'text-safety-orange font-bold' : 'text-gray-600'}>Business Info</span>
+              <span className={step >= 2 ? 'text-safety-orange font-bold' : 'text-gray-600'}>Load Wallet</span>
+              <span className={step >= 3 ? 'text-safety-orange font-bold' : 'text-gray-600'}>Get Number</span>
+              <span className={step >= 4 ? 'text-safety-orange font-bold' : 'text-gray-600'}>Complete</span>
             </div>
           </div>
 
@@ -205,24 +205,24 @@ export default function OnboardingPage() {
             {step === 1 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
-                  <Building2 className="w-6 h-6 text-cyan-500" />
-                  <h2 className="text-2xl font-bold">Tell us about your business</h2>
+                  <Building2 className="w-6 h-6 text-safety-orange" />
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Tell us about your business</h2>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
-                  <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent" placeholder="Acme HVAC" />
+                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Business Name</label>
+                  <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" placeholder="Acme HVAC" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Opens At</label>
-                    <input type="time" value={hoursStart} onChange={(e) => setHoursStart(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
+                    <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Opens At</label>
+                    <input type="time" value={hoursStart} onChange={(e) => setHoursStart(e.target.value)} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Closes At</label>
-                    <input type="time" value={hoursEnd} onChange={(e) => setHoursEnd(e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent" />
+                    <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Closes At</label>
+                    <input type="time" value={hoursEnd} onChange={(e) => setHoursEnd(e.target.value)} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" />
                   </div>
                 </div>
-                <button onClick={handleBusinessNext} disabled={!businessName || loading} className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+                <button onClick={handleBusinessNext} disabled={!businessName || loading} className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide">
                   {loading ? 'Saving...' : 'Continue'}
                 </button>
                 {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4"><p className="text-sm text-red-900">{error}</p></div>}
@@ -232,17 +232,23 @@ export default function OnboardingPage() {
             {step === 2 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
-                  <DollarSign className="w-6 h-6 text-cyan-500" />
-                  <h2 className="text-2xl font-bold">Load Your Wallet</h2>
+                  <DollarSign className="w-6 h-6 text-safety-orange" />
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Load Your Wallet</h2>
                 </div>
-                <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-6 mb-6">
-                  <p className="text-sm text-cyan-800 mb-3">There is a <strong>$5 setup fee</strong> for your Snap Calls forwarding number. It will be deducted from your wallet.</p>
-                  <p className="text-sm text-cyan-700">💰 Minimum deposit: $20 • Larger deposits get bonus credits!</p>
+                <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-6 mb-6" style={{boxShadow: '0 0 15px rgba(255, 107, 0, 0.2)'}}>
+                  <p className="text-sm text-white mb-3 font-medium"><strong className="text-safety-orange uppercase tracking-wider">SnapCalls Basic</strong>: $1.00 per missed call response (your number is for <strong className="text-safety-orange">call forwarding only</strong>)</p>
+                  <p className="text-sm text-white mb-3 font-medium">💰 Minimum deposit: $20 • Larger deposits get bonus credits!</p>
+                  <div className="bg-safety-orange border-2 border-white rounded-md p-4 mt-3" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
+                    <p className="text-sm text-white font-bold mb-1 uppercase tracking-wide">🎉 Want to use your Snap number as a full business phone line?</p>
+                    <p className="text-xs text-white mb-2 font-medium">Upgrade to <strong>SnapLine</strong> for $20/month: Make outbound calls, send/receive SMS, and use your Snap number as a complete business phone service!</p>
+                    <p className="text-xs text-white font-medium">You can upgrade after onboarding from your dashboard.</p>
+                  </div>
+                  <p className="text-xs text-safety-orange mt-3 font-bold tracking-wider">Note: $5 setup fee will be deducted from your wallet for your dedicated number</p>
                 </div>
                 {!clientSecret && (
                   <>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">Select Deposit Amount</label>
+                      <label className="block text-sm font-bold text-charcoal-text mb-3 uppercase tracking-wider">Select Deposit Amount</label>
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           { amount: 20, bonus: 0, label: '$20' },
@@ -250,24 +256,26 @@ export default function OnboardingPage() {
                           { amount: 50, bonus: 12.5, label: '$50', badge: '25% bonus' },
                           { amount: 100, bonus: 50, label: '$100', badge: '50% bonus' },
                         ].map((option) => (
-                          <button key={option.amount} type="button" onClick={() => setDepositAmount(option.amount)} className={`relative p-4 border-2 rounded-lg text-left transition-all ${depositAmount === option.amount ? 'border-cyan-500 bg-cyan-50' : 'border-gray-200 hover:border-cyan-300'}`}>
-                            <div className="font-bold text-lg">{option.label}</div>
-                            <div className="text-sm text-gray-600">= ${(option.amount + option.bonus).toFixed(2)} credit</div>
-                            {option.badge && <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">{option.badge}</div>}
+                          <button key={option.amount} type="button" onClick={() => setDepositAmount(option.amount)} className={`relative p-4 border-2 rounded-lg text-left snap-transition ${depositAmount === option.amount ? 'border-safety-orange bg-safety-orange/10' : 'border-gray-300 hover:border-safety-orange/50'}`}>
+                            <div className="font-bold text-lg text-deep-black">{option.label}</div>
+                            <div className="text-sm text-charcoal-text font-medium">= ${(option.amount + option.bonus).toFixed(2)} credit</div>
+                            {option.badge && <div className="absolute top-2 right-2 bg-safety-orange text-white text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wider border border-white" style={{boxShadow: '0 0 5px rgba(255, 255, 255, 0.3)'}}>{option.badge}</div>}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
-                      By continuing, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:text-cyan-700 underline">Terms of Service</a>. Phone numbers remain property of Snap Calls and may be reassigned if your account is closed.
+                    <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-4 text-sm text-white" style={{boxShadow: '0 0 10px rgba(255, 107, 0, 0.2)'}}>
+                      <p className="mb-2 font-medium"><strong className="text-safety-orange uppercase tracking-wider">Important:</strong> Your Snap number is for <strong className="text-safety-orange">call forwarding only</strong> (forwards missed calls to your real phone).</p>
+                      <p className="font-medium">If you use it for regular inbound/outbound calls, service will be suspended at 20 calls. To use as a full business phone line, upgrade to <strong className="text-safety-orange">SnapLine ($20/month)</strong> anytime.</p>
+                      <p className="mt-3 font-medium">By continuing, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-safety-orange hover:underline font-bold">Terms of Service</a>.</p>
                     </div>
                   </>
                 )}
                 {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4"><p className="text-sm text-red-900">{error}</p></div>}
                 {!clientSecret ? (
                   <div className="flex space-x-4">
-                    <button onClick={() => setStep(1)} className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">Back</button>
-                    <button onClick={handleDepositStart} disabled={loading} className="flex-1 px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{loading ? 'Loading...' : `Continue with $${depositAmount}`}</button>
+                    <button onClick={() => setStep(1)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
+                    <button onClick={handleDepositStart} disabled={loading} className="btn-snap-light flex-1 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide">{loading ? 'Loading...' : `Continue with $${depositAmount}`}</button>
                   </div>
                 ) : (
                   <>
@@ -286,36 +294,37 @@ export default function OnboardingPage() {
             {step === 3 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
-                  <Phone className="w-6 h-6 text-cyan-500" />
-                  <h2 className="text-2xl font-bold">Get Your Forwarding Number</h2>
+                  <Phone className="w-6 h-6 text-safety-orange" />
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Get Your Forwarding Number</h2>
                 </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-                  <p className="text-sm text-green-800 mb-2">✓ Wallet loaded successfully!</p>
-                  <p className="text-sm text-green-700">Now we will assign you a dedicated forwarding number. The $5 setup fee will be deducted from your wallet.</p>
+                <div className="bg-safety-orange border-2 border-white rounded-lg p-6 mb-6" style={{boxShadow: '0 0 15px rgba(255, 107, 0, 0.3)'}}>
+                  <p className="text-sm text-white mb-2 font-bold uppercase tracking-wider">✓ Wallet loaded successfully!</p>
+                  <p className="text-sm text-white font-medium">Now we will assign you a dedicated <strong>call forwarding number</strong>. The $5 setup fee will be deducted from your wallet.</p>
+                  <p className="text-xs text-white mt-3 font-medium"><strong>Reminder:</strong> This number is for forwarding missed calls only. Want full phone service? Upgrade to SnapLine later!</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Area Code (Optional)</label>
-                  <input type="text" value={areaCode} onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, '').slice(0, 3))} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent" placeholder="403, 587, etc." maxLength={3} />
-                  <p className="text-sm text-gray-500 mt-1">We will try to assign a number with this area code, or the next available number.</p>
+                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Preferred Area Code (Optional)</label>
+                  <input type="text" value={areaCode} onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, '').slice(0, 3))} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" placeholder="403, 587, etc." maxLength={3} />
+                  <p className="text-sm text-charcoal-text mt-1 font-medium">We will try to assign a number with this area code, or the next available number.</p>
                 </div>
                 {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4"><p className="text-sm text-red-900">{error}</p></div>}
-                <button onClick={handleNumberSetup} disabled={loading} className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{loading ? 'Setting up your number...' : 'Get My Number'}</button>
+                <button onClick={handleNumberSetup} disabled={loading} className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide">{loading ? 'Setting up your number...' : 'Get My Number'}</button>
               </div>
             )}
 
             {step === 4 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
-                  <CheckCircle className="w-6 h-6 text-cyan-500" />
-                  <h2 className="text-2xl font-bold">You are all set!</h2>
+                  <CheckCircle className="w-6 h-6 text-safety-orange" />
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">You are all set!</h2>
                 </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                  <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-green-900 mb-2">Welcome to Snap Calls!</h3>
-                  <p className="text-green-800 mb-4">Your forwarding number has been set up and is ready to start responding to missed calls.</p>
-                  <p className="text-sm text-green-700">Next: Customize your message templates in the dashboard.</p>
+                <div className="bg-safety-orange border-2 border-white rounded-lg p-6 text-center" style={{boxShadow: '0 0 20px rgba(255, 107, 0, 0.4)'}}>
+                  <CheckCircle className="w-16 h-16 text-white mx-auto mb-4" style={{filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))'}} />
+                  <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">Welcome to Snap Calls!</h3>
+                  <p className="text-white mb-4 font-medium">Your forwarding number has been set up and is ready to start responding to missed calls.</p>
+                  <p className="text-sm text-white font-medium">Next: Customize your message templates in the dashboard.</p>
                 </div>
-                <button onClick={() => router.push('/dashboard')} className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 font-medium">Go to Dashboard</button>
+                <button onClick={() => router.push('/dashboard')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Go to Dashboard</button>
               </div>
             )}
           </div>

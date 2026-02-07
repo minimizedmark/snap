@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
       case 'basic':
         where.subscriptionType = 'BASIC';
         break;
-      case 'public-line':
-        where.subscriptionType = 'PUBLIC_LINE';
+      case 'snapline':
+        where.subscriptionType = 'SNAPLINE';
         break;
       case 'paused':
         where.subscriptionStatus = 'paused';
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
       case 'manual-upgrade':
         await prisma.user.update({
           where: { id: userId },
-          data: { subscriptionType: 'PUBLIC_LINE' },
+          data: { subscriptionType: 'SNAPLINE' },
         });
         break;
 

@@ -17,7 +17,7 @@ export async function GET() {
     const [
       totalUsers,
       basicUsers,
-      publicLineUsers,
+      snapLineUsers,
       activeUsers,
       pausedUsers,
       todaySignups,
@@ -25,7 +25,7 @@ export async function GET() {
     ] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { subscriptionType: 'BASIC' } }),
-      prisma.user.count({ where: { subscriptionType: 'PUBLIC_LINE' } }),
+      prisma.user.count({ where: { subscriptionType: 'SNAPLINE' } }),
       prisma.user.count({ where: { isActive: true } }),
       prisma.user.count({ where: { subscriptionStatus: 'paused' } }),
       prisma.user.count({ where: { createdAt: { gte: todayStart } } }),
@@ -59,15 +59,15 @@ export async function GET() {
       }),
       prisma.user.count({
         where: {
-          subscriptionType: 'PUBLIC_LINE',
+          subscriptionType: 'SNAPLINE',
           createdAt: { gte: todayStart },
         },
       }),
     ]);
 
     // Revenue calculations
-    const publicLineCount = publicLineUsers;
-    const mrr = publicLineCount * 20; // $20/month per Public Line user
+    const snapLineCount = snapLineUsers;
+    const mrr = snapLineCount * 20; // $20/month per SnapLine user
 
     // Call statistics
     const [
@@ -139,17 +139,18 @@ export async function GET() {
       users: {
         total: totalUsers,
         basic: basicUsers,
-        publicLine: publicLineUsers,
+        snapLine: snapLineUsers,
+        suspended: await prisma.user.count({ where: { subscriptionStatus: 'suspended' } }),
         active: activeUsers,
         paused: pausedUsers,
         todaySignups,
         monthSignups,
       },
-      autoUpgradeFunnel: {
+      abusePrevention: {
         at10Calls: usersAt10Calls,
         at15Calls: usersAt15Calls,
         at20Calls: usersAt20Calls,
-        todayUpgrades,
+        suspended: await prisma.user.count({ where: { subscriptionStatus: 'suspended' } }),
       },
       revenue: {
         mrr,

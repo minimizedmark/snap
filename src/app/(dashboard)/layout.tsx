@@ -58,12 +58,12 @@ export default function DashboardLayout({
   // Show loading while checking onboarding
   if (status === 'loading' || checkingOnboarding) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-deep-black flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-black rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Phone className="w-10 h-10 text-cyan-500 animate-pulse" />
+          <div className="w-16 h-16 bg-safety-orange rounded flex items-center justify-center mx-auto mb-4 border-2 border-white" style={{boxShadow: '0 0 20px rgba(255, 107, 0, 0.5)'}}>
+            <Phone className="w-10 h-10 text-white animate-pulse" />
           </div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-white font-bold uppercase tracking-wider">Loading...</p>
         </div>
       </div>
     );
@@ -72,17 +72,17 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b z-50 px-4 py-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-deep-black border-b border-safety-orange z-50 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <Phone className="w-5 h-5 text-cyan-500" />
+            <div className="w-8 h-8 bg-safety-orange rounded flex items-center justify-center border-2 border-white" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
+              <Phone className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-lg">Snap Calls</span>
+            <span className="font-bold text-lg text-white uppercase tracking-wide">Snap Calls</span>
           </div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2"
+            className="p-2 text-white hover:text-safety-orange snap-transition"
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -101,13 +101,13 @@ export default function DashboardLayout({
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="hidden lg:flex items-center space-x-2 px-6 py-6 border-b">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-              <Phone className="w-6 h-6 text-cyan-500" />
+          <div className="hidden lg:flex items-center space-x-2 px-6 py-6 border-b border-gray-200 bg-deep-black">
+            <div className="w-10 h-10 bg-safety-orange rounded flex items-center justify-center border-2 border-white" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
+              <Phone className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Snap Calls</h1>
-              <p className="text-xs text-cyan-500 font-medium">It&apos;s a snap</p>
+              <h1 className="text-xl font-bold text-white uppercase tracking-wide">Snap Calls</h1>
+              <p className="text-xs text-safety-orange font-bold uppercase tracking-wider">Never Miss A Job</p>
             </div>
           </div>
 
@@ -120,31 +120,32 @@ export default function DashboardLayout({
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg snap-transition font-bold uppercase tracking-wide ${
                     isActive
-                      ? 'bg-cyan-50 text-cyan-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-safety-orange text-white border-2 border-white' 
+                      : 'text-charcoal-text hover:bg-safety-orange/10 hover:text-safety-orange'
                   }`}
+                  style={isActive ? {boxShadow: '0 0 8px rgba(255, 107, 0, 0.4)'} : {}}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span>{item.name}</span>
+                  <span className="text-xs">{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* User section */}
-          <div className="border-t px-4 py-4">
+          <div className="border-t border-gray-200 px-4 py-4 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm">
-                <p className="font-medium text-gray-900 truncate">
+                <p className="font-bold text-charcoal-text truncate uppercase tracking-wide text-xs">
                   {session?.user?.email}
                 </p>
               </div>
             </div>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="w-full flex items-center space-x-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="w-full flex items-center space-x-2 px-3 py-2 text-charcoal-text hover:bg-safety-orange hover:text-white rounded-lg snap-transition font-bold uppercase tracking-wide text-xs"
             >
               <LogOut className="w-5 h-5" />
               <span>Sign out</span>
