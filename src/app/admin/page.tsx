@@ -308,36 +308,36 @@ export default function AdminDashboard() {
 
         {/* AUTO-UPGRADE FUNNEL */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">🎯 Auto-Upgrade Funnel</h2>
+          <h2 className="text-2xl font-bold mb-4">🚨 Abuse Prevention Tracking</h2>
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-4xl font-bold text-yellow-400">
-                  {metrics.autoUpgradeFunnel.at10Calls}
+                  {metrics.abusePrevention.at10Calls}
                 </div>
                 <div className="text-sm text-gray-400 mt-2">At 10+ Calls</div>
-                <div className="text-xs text-yellow-400 mt-1">⚠️ Warning Sent</div>
+                <div className="text-xs text-yellow-400 mt-1">👀 Monitoring</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-orange-400">
-                  {metrics.autoUpgradeFunnel.at15Calls}
+                  {metrics.abusePrevention.at15Calls}
                 </div>
                 <div className="text-sm text-gray-400 mt-2">At 15+ Calls</div>
-                <div className="text-xs text-orange-400 mt-1">🔥 Hot Leads</div>
+                <div className="text-xs text-orange-400 mt-1">⚠️ Warning Sent</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-red-400">
-                  {metrics.autoUpgradeFunnel.at20Calls}
+                  {metrics.abusePrevention.at20Calls}
                 </div>
                 <div className="text-sm text-gray-400 mt-2">At 20+ Calls</div>
-                <div className="text-xs text-red-400 mt-1">🚨 Ready to Upgrade</div>
+                <div className="text-xs text-red-400 mt-1">🚫 Suspended</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-400">
-                  {metrics.autoUpgradeFunnel.todayUpgrades}
+                  {metrics.abusePrevention.todayUpgrades}
                 </div>
-                <div className="text-sm text-gray-400 mt-2">Today's Upgrades</div>
-                <div className="text-xs text-green-400 mt-1">💰 +${metrics.autoUpgradeFunnel.todayUpgrades * 20}</div>
+                <div className="text-sm text-gray-400 mt-2">Today's SnapLine</div>
+                <div className="text-xs text-green-400 mt-1">💰 +${metrics.abusePrevention.todayUpgrades * 20}</div>
               </div>
             </div>
           </div>
