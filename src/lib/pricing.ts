@@ -35,30 +35,90 @@ export const PRICING = {
 
 export type SnapCallsTier = 'BASIC' | 'PRO';
 
+/**
+ * Parameters for calculating itemized call costs
+ */
 export interface CallPricingParams {
   tier: SnapCallsTier;
+  isVip: boolean;
   hasVoicemail: boolean;
+  sequencesEnabled: boolean;
+  recognitionEnabled: boolean;
+  twoWayEnabled: boolean;
+  vipPriorityEnabled: boolean;
+  transcriptionEnabled: boolean;
+  isRepeatCaller: boolean;
+  customerReplied: boolean;
 }
 
+/**
+ * Itemized breakdown of call costs
+ */
 export interface CallPricingResult {
-  cost: number;
+  /** Base cost for the call ($1.00 for BASIC, $1.50 for PRO) */
+  baseCost: number;
+  /** Cost for follow-up sequences ($0.50 if enabled) */
+  sequencesCost: number;
+  /** Cost for caller recognition ($0.25 if enabled and repeat caller) */
+  recognitionCost: number;
+  /** Cost for two-way communication ($0.50 if enabled) */
+  twoWayCost: number;
+  /** Cost for VIP priority handling ($0.50 for VIP callers, $0.25 for regular) */
+  vipPriorityCost: number;
+  /** Cost for voicemail transcription ($0.25 if enabled and has voicemail) */
+  transcriptionCost: number;
+  /** Total cost to deduct from wallet */
+  totalCost: number;
+  /** Tier used for pricing */
   tier: SnapCallsTier;
 }
 
 /**
- * Calculates the cost to deduct from wallet for a call
+ * Calculates itemized call costs based on tier and enabled features.
+ * 
+ * Pricing breakdown:
+ * - Base: $1.00 (BASIC) or $1.50 (PRO)
+ * - Follow-up sequences: +$0.50 if enabled
+ * - Caller recognition: +$0.25 if enabled AND repeat caller
+ * - Two-way communication: +$0.50 if enabled
+ * - VIP priority: +$0.50 if VIP caller (or +$0.25 if enabled but not VIP)
+ * - Voicemail transcription: +$0.25 if enabled AND voicemail exists
+ * 
  * Note: The actual cost to the user is lower when they loaded wallet with bonuses.
  * For example, with 50% bonus ($100 load gets $150 credits):
  *   - Basic tier: $1.00 deducted, but effective cost is $0.67
  *   - Pro tier: $1.50 deducted, but effective cost is $1.00
+ * 
+ * @param params - Call pricing parameters including tier and feature flags
+ * @returns Itemized cost breakdown with total
  */
 export function calculateCallCost(params: CallPricingParams): CallPricingResult {
-  const cost = params.tier === 'BASIC' 
+  const baseCost = params.tier === 'BASIC' 
     ? PRICING.SNAPCALLS_BASIC.PRICE
     : PRICING.SNAPCALLS_PRO.PRICE;
 
+  const sequencesCost = params.sequencesEnabled ? 0.50 : 0;
+  
+  const recognitionCost = (params.recognitionEnabled && params.isRepeatCaller) ? 0.25 : 0;
+  
+  const twoWayCost = params.twoWayEnabled ? 0.50 : 0;
+  
+  const vipPriorityCost = params.vipPriorityEnabled
+    ? (params.isVip ? 0.50 : 0.25)
+    : 0;
+  
+  const transcriptionCost = (params.transcriptionEnabled && params.hasVoicemail) ? 0.25 : 0;
+
+  const totalCost = baseCost + sequencesCost + recognitionCost + twoWayCost + vipPriorityCost + transcriptionCost;
+
   return {
-    cost,
+    baseCost,
+    sequencesCost,
+    recognitionCost,
+    twoWayCost,
+    vipPriorityCost,
+    transcriptionCost,
+    totalCost,
     tier: params.tier,
   };
 }

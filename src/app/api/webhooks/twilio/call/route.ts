@@ -183,6 +183,7 @@ async function processCallAsync(req: NextRequest) {
     };
 
     const pricing = calculateCallCost({
+      tier: user.subscriptionType === 'SNAPLINE' ? 'PRO' : 'BASIC',
       isVip,
       hasVoicemail,
       sequencesEnabled: features.sequencesEnabled,
