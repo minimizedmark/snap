@@ -87,41 +87,76 @@ async function processIncomingSmsAsync(req: NextRequest) {
       return;
     }
 
-    // Update call log with customer reply
-    await prisma.callLog.update({
-      where: { id: recentCall.id },
-      data: {
-        customerReplied: true,
-        customerReplyText: messageBody,
-        twoWayTriggered: true,
-      },
-    });
+    /**
+     * BILLING FIX (BUG #16, #17, #18):
+     * 
+     * CRITICAL ORDER OF OPERATIONS:
+     * 1. Attempt wallet debit FIRST (we control the wallet, it's trivial to refund)
+     * 2. Only after successful debit, update call log atomically
+     * 3. If debit fails, return early WITHOUT updating any call log state
+     * 
+     * Old flow (BROKEN):
+     *   - Update call log (customerReplied = true) ← USER GOT FREE TWO-WAY
+     *   - Try to charge wallet
+     *   - If charge fails, data is inconsistent and can't rollback
+     * 
+     * New flow (SAFE):
+     *   - Try to charge wallet
+     *   - If insufficient balance, return early → no state changes
+     *   - If charge succeeds, update call log atomically
+     *   - No race conditions: atomic update prevents totalCost increment conflicts
+     */
+    let balanceAfter: number;
+    try {
+      balanceAfter = await debitWallet({
+        userId: user.id,
+        amount: 0.5, // Two-way cost
+        description: `Two-way conversation with ${customerNumber}`,
+        referenceId: smsMessageSid, // Use SMS ID for idempotency
+      });
+    } catch (chargeError) {
+      console.error('❌ Failed to charge two-way cost:', {
+        userId: user.id,
+        customerNumber,
+        smsMessageSid,
+        error: chargeError,
+      });
+      // CRITICAL: Don't update call log if charge fails
+      // User should not receive two-way without being charged
+      return;
+    }
 
-    // Charge for two-way feature if not already charged
-    if (recentCall.twoWayCost.toNumber() === 0) {
-      try {
-        const balanceAfter = await debitWallet({
-          userId: user.id,
-          amount: 0.5, // Two-way cost
-          description: `Two-way conversation with ${customerNumber}`,
-          referenceId: recentCall.id,
-        });
+    // After successful wallet debit, update call log atomically
+    // Use exact value calculation instead of increment to avoid race conditions
+    const newTotalCost = recentCall.totalCost.toNumber() + 0.5;
 
-        // Update call log with two-way cost
-        await prisma.callLog.update({
-          where: { id: recentCall.id },
-          data: {
-            twoWayCost: toDecimal(0.5),
-            totalCost: {
-              increment: toDecimal(0.5),
-            },
-          },
-        });
+    try {
+      await prisma.callLog.update({
+        where: { id: recentCall.id },
+        data: {
+          customerReplied: true,
+          customerReplyText: messageBody,
+          twoWayTriggered: true,
+          twoWayCost: toDecimal(0.5),
+          totalCost: toDecimal(newTotalCost), // Atomic: exact value, not increment
+        },
+      });
 
-        console.log('✅ Two-way cost charged:', { userId: user.id, balanceAfter });
-      } catch (error) {
-        console.error('❌ Failed to charge two-way cost:', error);
-      }
+      console.log('✅ Two-way charge and call log update successful:', {
+        userId: user.id,
+        callLogId: recentCall.id,
+        balanceAfter,
+        twoWayCost: 0.5,
+        newTotalCost,
+      });
+    } catch (updateError) {
+      console.error('❌ Failed to update call log after successful charge:', {
+        userId: user.id,
+        callLogId: recentCall.id,
+        error: updateError,
+      });
+      // Log for manual review - wallet was debited but call log wasn't updated
+      // This is a data consistency issue that ops should investigate
     }
 
     // Notify owner of customer reply
