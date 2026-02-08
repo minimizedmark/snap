@@ -5,7 +5,28 @@ import { calculateWalletDeposit } from '@/lib/pricing';
 import { prisma } from '@/lib/prisma';
 import { purchaseTwilioNumber } from '@/lib/twilio-provisioning';
 import { addNumberToInventory, assignAvailableNumber } from '@/lib/number-inventory';
+import { env } from '@/lib/env';
 import Stripe from 'stripe';
+import type { SubscriptionType } from '@prisma/client';
+
+/**
+ * Maps Stripe price ID to internal subscription type
+ * 
+ * This prevents hardcoding subscription types and allows multiple price points
+ * per tier (e.g., annual vs monthly pricing).
+ */
+function getSubscriptionTypeFromPriceId(priceId: string): SubscriptionType {
+  if (priceId === env.STRIPE_SNAPLINE_PRICE_ID) {
+    return 'SNAPLINE';
+  }
+  if (priceId === env.STRIPE_BASIC_PRICE_ID) {
+    return 'BASIC';
+  }
+  
+  // Default to BASIC for unknown price IDs
+  console.warn('⚠️  Unknown Stripe price ID:', priceId, '- defaulting to BASIC');
+  return 'BASIC';
+}
 
 /**
  * Handles Stripe webhook events
@@ -70,10 +91,30 @@ export async function POST(req: NextRequest) {
 
 /**
  * Handles successful payment
+ * 
+ * IDEMPOTENCY STRATEGY:
+ * Stripe may retry webhook delivery if our server doesn't respond with 200.
+ * To prevent double-crediting the user's wallet, we check if a transaction
+ * with this paymentIntent.id already exists before processing.
+ * 
+ * The referenceId on WalletTransaction serves as our idempotency key.
  */
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   const customerId = paymentIntent.customer as string;
   const amount = paymentIntent.amount / 100; // Convert from cents
+
+  // IDEMPOTENCY CHECK: Has this payment already been processed?
+  const existingTransaction = await prisma.walletTransaction.findFirst({
+    where: { referenceId: paymentIntent.id },
+  });
+
+  if (existingTransaction) {
+    console.log('✅ Payment already processed (idempotent):', {
+      paymentIntentId: paymentIntent.id,
+      existingTransactionId: existingTransaction.id,
+    });
+    return; // Early return - payment already credited
+  }
 
   // Find user by Stripe customer ID
   const stripeCustomer = await prisma.stripeCustomer.findUnique({
@@ -264,6 +305,14 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
 
 /**
  * Handles subscription created/updated
+ * 
+ * IDEMPOTENCY STRATEGY:
+ * Subscription updates are naturally idempotent - updating the same
+ * subscription status multiple times has no adverse effect. The database
+ * update is a PUT operation that produces the same result regardless of
+ * how many times it's called.
+ * 
+ * BUG FIX #9: Map Stripe price ID to subscription type instead of hardcoding.
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
@@ -277,24 +326,42 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     return;
   }
 
+  // Extract price ID from subscription items
+  const priceId = subscription.items.data[0]?.price.id;
+  if (!priceId) {
+    console.error('❌ No price ID found in subscription:', subscription.id);
+    return;
+  }
+
+  // Map price ID to subscription type
+  const subscriptionType = getSubscriptionTypeFromPriceId(priceId);
+
   await prisma.user.update({
     where: { id: stripeCustomer.userId },
     data: {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      subscriptionType: 'SNAPLINE',
+      subscriptionType,
     },
   });
 
   console.log('✅ Subscription updated:', {
     userId: stripeCustomer.userId,
     subscriptionId: subscription.id,
+    priceId,
+    subscriptionType,
     status: subscription.status,
   });
 }
 
 /**
  * Handles subscription deleted/cancelled
+ * 
+ * IDEMPOTENCY STRATEGY:
+ * Subscription deletions are naturally idempotent - setting subscriptionType
+ * to BASIC and clearing the subscription ID multiple times has no adverse effect.
+ * 
+ * BUG FIX #11: Updated branding from 'Public Line' to 'SnapLine'.
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
@@ -329,12 +396,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     await resend.emails.send({
-      from: `Snap Calls <${process.env.FROM_EMAIL}>`,
+      from: `SnapCalls <${process.env.FROM_EMAIL}>`,
       to: stripeCustomer.user.email,
-      subject: 'Public Line Subscription Cancelled',
+      subject: 'SnapLine Subscription Cancelled',
       html: `
         <h2>Subscription Cancelled</h2>
-        <p>Your Public Line subscription has been cancelled.</p>
+        <p>Your SnapLine subscription has been cancelled.</p>
         <p>You've been downgraded to the Basic plan. You can still use call forwarding, but direct calls to your number will not be answered.</p>
         <p>You can upgrade again anytime from your dashboard.</p>
       `,
@@ -411,12 +478,12 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     await resend.emails.send({
-      from: `Snap Calls <${process.env.FROM_EMAIL}>`,
+      from: `SnapCalls <${process.env.FROM_EMAIL}>`,
       to: stripeCustomer.user.email,
       subject: '⚠️ Subscription Payment Failed - Service Paused',
       html: `
         <h2>Payment Failed</h2>
-        <p>We were unable to process your monthly Public Line subscription payment.</p>
+        <p>We were unable to process your monthly SnapLine subscription payment.</p>
         <p>Your service has been paused until payment is successful.</p>
         <p>Please update your payment method in your dashboard to restore service.</p>
         <p>If you have any questions, please contact support.</p>

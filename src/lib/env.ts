@@ -102,7 +102,8 @@ export const env = Object.freeze({
   // Stripe
   STRIPE_SECRET_KEY: getRequiredEnv('STRIPE_SECRET_KEY', 'sk_test_xxxxxxxxxxxxxxxxxxxxx'),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: getOptionalEnv('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', 'pk_test_xxxxxxxxxxxxxxxxxxxxx'),
-  STRIPE_SNAPLINE_PRICE_ID: getOptionalEnv('STRIPE_SNAPLINE_PRICE_ID', 'price_xxxxxxxxxxxxx'),
+  STRIPE_BASIC_PRICE_ID: getOptionalEnv('STRIPE_BASIC_PRICE_ID', 'price_basic_xxxxxxxxxxxxx'),
+  STRIPE_SNAPLINE_PRICE_ID: getOptionalEnv('STRIPE_SNAPLINE_PRICE_ID', 'price_snapline_xxxxxxxxxxxxx'),
   STRIPE_WEBHOOK_SECRET: getRequiredEnv('STRIPE_WEBHOOK_SECRET', 'whsec_xxxxxxxxxxxxxxxxxx'),
   
   // Email
