@@ -482,12 +482,54 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
       </html>
     `,
     
-    'payment-failed': () => `
+    'auto-reload-success': (d) => `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; padding: 20px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <tr>
+              <td style="background-color: #10B981; padding: 40px 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">✅ Wallet Auto-Reloaded</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 40px 20px;">
+                <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">$${d.amount} Added to Your Wallet</h2>
+                <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
+                  Your wallet balance was low, so we automatically reloaded it using your saved payment method.
+                </p>
+                <div style="background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                  <p style="color: #065F46; margin: 0; font-weight: 600;">New Balance: $${d.newBalance}</p>
+                </div>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${process.env.APP_URL}/wallet" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    View Wallet
+                  </a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
+                <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+
+    'payment-failed': () => `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">>
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; padding: 20px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">

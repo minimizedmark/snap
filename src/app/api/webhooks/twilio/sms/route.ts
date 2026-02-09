@@ -69,6 +69,24 @@ async function processIncomingSmsAsync(req: NextRequest) {
       return;
     }
 
+    // IDEMPOTENCY: Check if this SMS was already processed
+    // This prevents duplicate charges if Twilio retries the webhook
+    const existingTransaction = await prisma.walletTransaction.findFirst({
+      where: {
+        userId: user.id,
+        referenceId: smsMessageSid,
+        type: 'DEBIT',
+      },
+    });
+
+    if (existingTransaction) {
+      console.log('ℹ️  SMS already processed (idempotency check):', {
+        smsMessageSid,
+        customerNumber,
+      });
+      return;
+    }
+
     // Find the most recent call from this customer
     const normalizedCustomerNumber = normalizePhoneNumber(customerNumber);
     const recentCall = await prisma.callLog.findFirst({

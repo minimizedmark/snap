@@ -1,18 +1,37 @@
 import twilio from 'twilio';
 import { assignAvailableNumber } from './number-inventory';
 
-const ADMIN_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const ADMIN_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-
-if (!ADMIN_ACCOUNT_SID || !ADMIN_AUTH_TOKEN) {
-  console.warn('⚠️  Admin Twilio credentials not configured');
+/**
+ * Creates and returns a Twilio client with validated admin credentials.
+ * Throws if TWILIO_ADMIN_ACCOUNT_SID or TWILIO_ADMIN_AUTH_TOKEN are not set.
+ */
+function getTwilioClient(): ReturnType<typeof twilio> {
+  const accountSid = process.env.TWILIO_ADMIN_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_ADMIN_AUTH_TOKEN;
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio admin credentials not configured');
+  }
+  return twilio(accountSid, authToken);
 }
 
-function getTwilioClient() {
-  if (!ADMIN_ACCOUNT_SID || !ADMIN_AUTH_TOKEN) {
-    throw new Error('Admin Twilio credentials required for number provisioning');
+/**
+ * Returns the base URL for webhook endpoints.
+ * Uses APP_URL env var, falling back to production URL.
+ */
+function getBaseUrl(): string {
+  return process.env.APP_URL || 'https://snapcalls.app';
+}
+
+/**
+ * Validates and parses an area code string.
+ * Area codes must be numeric and in the range 200–999.
+ */
+function validateAreaCode(areaCode: string): number {
+  const parsed = parseInt(areaCode, 10);
+  if (isNaN(parsed) || parsed < 200 || parsed > 999) {
+    throw new Error(`Invalid area code: ${areaCode}`);
   }
-  return twilio(ADMIN_ACCOUNT_SID, ADMIN_AUTH_TOKEN);
+  return parsed;
 }
 
 /**
@@ -145,10 +164,14 @@ export async function acquireNumber(params: {
  */
 export async function purchaseTwilioNumber(areaCode?: string, country: 'US' | 'CA' = 'US'): Promise<string> {
   const client = getTwilioClient();
+  const baseUrl = getBaseUrl();
+
+  // Validate area code if provided
+  const parsedAreaCode = areaCode ? validateAreaCode(areaCode) : undefined;
 
   // Search for available numbers
   const availableNumbers = await client.availablePhoneNumbers(country).local.list({
-    areaCode: areaCode ? parseInt(areaCode, 10) : undefined,
+    areaCode: parsedAreaCode,
     limit: 1,
   });
 
@@ -161,11 +184,11 @@ export async function purchaseTwilioNumber(areaCode?: string, country: 'US' | 'C
   // Purchase the number with webhooks pre-configured
   const purchasedNumber = await client.incomingPhoneNumbers.create({
     phoneNumber: numberToPurchase,
-    voiceUrl: 'https://snapcalls.app/api/webhooks/twilio/call',
+    voiceUrl: `${baseUrl}/api/webhooks/twilio/call`,
     voiceMethod: 'POST',
-    statusCallback: 'https://snapcalls.app/api/webhooks/twilio/status',
+    statusCallback: `${baseUrl}/api/webhooks/twilio/status`,
     statusCallbackMethod: 'POST',
-    smsUrl: 'https://snapcalls.app/api/webhooks/twilio/sms',
+    smsUrl: `${baseUrl}/api/webhooks/twilio/sms`,
     smsMethod: 'POST',
   });
 
@@ -177,6 +200,7 @@ export async function purchaseTwilioNumber(areaCode?: string, country: 'US' | 'C
  */
 async function purchaseNonRegionalNumber(country: 'US' | 'CA' = 'US'): Promise<string> {
   const client = getTwilioClient();
+  const baseUrl = getBaseUrl();
 
   // For US, use toll-free. For CA, use mobile/national
   const availableNumbers = country === 'US'
@@ -192,11 +216,11 @@ async function purchaseNonRegionalNumber(country: 'US' | 'CA' = 'US'): Promise<s
   // Purchase the number with webhooks pre-configured
   const purchasedNumber = await client.incomingPhoneNumbers.create({
     phoneNumber: numberToPurchase,
-    voiceUrl: 'https://snapcalls.app/api/webhooks/twilio/call',
+    voiceUrl: `${baseUrl}/api/webhooks/twilio/call`,
     voiceMethod: 'POST',
-    statusCallback: 'https://snapcalls.app/api/webhooks/twilio/status',
+    statusCallback: `${baseUrl}/api/webhooks/twilio/status`,
     statusCallbackMethod: 'POST',
-    smsUrl: 'https://snapcalls.app/api/webhooks/twilio/sms',
+    smsUrl: `${baseUrl}/api/webhooks/twilio/sms`,
     smsMethod: 'POST',
   });
 
@@ -230,7 +254,7 @@ export async function sendSmsFromNumber(
   toNumber: string,
   message: string
 ): Promise<{ sid: string; status: string }> {
-  const client = twilio(ADMIN_ACCOUNT_SID!, ADMIN_AUTH_TOKEN!);
+  const client = getTwilioClient();
 
   const result = await client.messages.create({
     from: fromNumber,

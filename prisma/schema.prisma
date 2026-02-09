@@ -280,6 +280,7 @@ model LowBalanceAlert {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, alertLevel])
   @@index([userId, alertLevel])
   @@map("low_balance_alerts")
   @@schema("public")
@@ -366,5 +367,15 @@ model TemplateLibrary {
 
   @@index([category, templateType])
   @@map("template_library")
+  @@schema("public")
+}
+
+model ProcessedWebhook {
+  id          String   @id @default(cuid())
+  eventId     String   @unique @map("event_id")
+  processedAt DateTime @default(now()) @map("processed_at")
+  eventType   String   @map("event_type")
+
+  @@map("ProcessedWebhook")
   @@schema("public")
 }

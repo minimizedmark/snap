@@ -1,0 +1,11 @@
+{
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": true,
+    "workbench.settings.openDefaultSettings": false,
+    "chat.todoListTool.writeOnly": true,
+    "window.autoDetectColorScheme": false,
+    "claudeCode.disableLoginPrompt": true,
+    "claudeCode.useTerminal": true,
+    "editor.fontSize": 8,
+    "editor.mouseWheelZoom": true,
+    "claudeCodeChat.permissions.yoloMode": true
+}

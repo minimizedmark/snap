@@ -1,5 +1,7 @@
 import { prisma } from './prisma';
 import { toDecimal, fromDecimal, PRICING } from './pricing';
+import { chargePaymentMethod } from './stripe';
+import { sendEmail } from './email';
 
 /**
  * Custom error for insufficient wallet balance
@@ -208,36 +210,137 @@ export async function recordLowBalanceAlert(userId: string, alertLevel: number):
 }
 
 /**
- * Processes auto-reload if enabled and threshold reached
+ * Processes auto-reload if enabled and balance is below threshold.
+ *
+ * Flow:
+ * 1. Check wallet has auto-reload enabled and balance is below threshold
+ * 2. Verify Stripe customer has a saved payment method
+ * 3. Idempotency: skip if an auto-reload was already processed in the last 5 minutes
+ * 4. Charge the saved payment method via Stripe
+ * 5. On success: credit wallet + notify user
+ * 6. On failure: disable auto-reload to prevent repeated charges + notify user
+ *
+ * @returns true if reload was triggered successfully, false otherwise
  */
 export async function processAutoReload(userId: string): Promise<boolean> {
-  const wallet = await prisma.wallet.findUnique({
-    where: { userId },
-  });
+  try {
+    // Step 1: Check wallet auto-reload settings
+    const wallet = await prisma.wallet.findUnique({
+      where: { userId },
+    });
 
-  if (!wallet || !wallet.autoReloadEnabled) {
+    if (!wallet || !wallet.autoReloadEnabled) {
+      return false;
+    }
+
+    const balance = fromDecimal(wallet.balance);
+    const threshold = fromDecimal(wallet.autoReloadThreshold);
+    const reloadAmount = fromDecimal(wallet.autoReloadAmount);
+
+    if (balance >= threshold) {
+      return false;
+    }
+
+    // Step 2: Check for saved payment method
+    const stripeCustomer = await prisma.stripeCustomer.findUnique({
+      where: { userId },
+    });
+
+    if (!stripeCustomer || !stripeCustomer.paymentMethodId) {
+      console.warn('⚠️  Auto-reload enabled but no payment method saved:', { userId });
+      return false;
+    }
+
+    // Step 3: Idempotency — skip if auto-reload already triggered in the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recentReload = await prisma.walletTransaction.findFirst({
+      where: {
+        userId,
+        type: 'CREDIT',
+        description: { startsWith: 'Auto-reload:' },
+        timestamp: { gte: fiveMinutesAgo },
+      },
+    });
+
+    if (recentReload) {
+      console.log('ℹ️  Auto-reload already triggered recently, skipping:', {
+        userId,
+        lastReloadAt: recentReload.timestamp,
+      });
+      return false;
+    }
+
+    // Step 4: Charge the saved payment method
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    let paymentIntentId: string;
+    try {
+      paymentIntentId = await chargePaymentMethod(
+        stripeCustomer.stripeCustomerId,
+        stripeCustomer.paymentMethodId,
+        reloadAmount,
+        `Snap Calls auto-reload: $${reloadAmount.toFixed(2)}`
+      );
+    } catch (stripeError) {
+      console.error('❌ Auto-reload Stripe charge failed:', {
+        userId,
+        amount: reloadAmount,
+        error: stripeError,
+      });
+
+      // Disable auto-reload to prevent repeated failures
+      await prisma.wallet.update({
+        where: { userId },
+        data: { autoReloadEnabled: false },
+      });
+
+      // Notify user of payment failure
+      if (user?.email) {
+        await sendEmail(user.email, {
+          subject: '⚠️ Auto-Reload Payment Failed — Auto-Reload Disabled',
+          template: 'payment-failed',
+          data: {},
+        });
+      }
+
+      return false;
+    }
+
+    // Step 5: Credit the wallet
+    const newBalance = await creditWallet({
+      userId,
+      amount: reloadAmount,
+      description: `Auto-reload: $${reloadAmount.toFixed(2)}`,
+      referenceId: `auto_reload_${paymentIntentId}`,
+    });
+
+    console.log('✅ Auto-reload successful:', {
+      userId,
+      reloadAmount,
+      newBalance,
+      paymentIntentId,
+    });
+
+    // Notify user of successful reload
+    if (user?.email) {
+      await sendEmail(user.email, {
+        subject: `✅ Wallet Auto-Reloaded — $${reloadAmount.toFixed(2)} Added`,
+        template: 'auto-reload-success',
+        data: {
+          amount: reloadAmount.toFixed(2),
+          newBalance: newBalance.toFixed(2),
+        },
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Unexpected error in processAutoReload:', { userId, error });
     return false;
   }
-
-  const balance = fromDecimal(wallet.balance);
-  const threshold = fromDecimal(wallet.autoReloadThreshold);
-
-  if (balance >= threshold) {
-    return false;
-  }
-
-  // Get Stripe customer info
-  const stripeCustomer = await prisma.stripeCustomer.findUnique({
-    where: { userId },
-  });
-
-  if (!stripeCustomer || !stripeCustomer.paymentMethodId) {
-    return false;
-  }
-
-  // This will be implemented with Stripe integration
-  // For now, just return false
-  return false;
 }
 
 /**

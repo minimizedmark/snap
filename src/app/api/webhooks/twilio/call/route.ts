@@ -379,7 +379,7 @@ async function processCallAsync(req: NextRequest) {
     // Check for low balance alerts
     for (const alertLevel of PRICING.LOW_BALANCE_ALERTS) {
       if (await shouldSendLowBalanceAlert(user.id, alertLevel)) {
-        await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, balanceAfter);
+        await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, balanceAfter, alertLevel);
         await recordLowBalanceAlert(user.id, alertLevel);
       }
     }
@@ -403,11 +403,12 @@ async function sendLowBalanceAlert(
   userId: string,
   email: string,
   businessName: string,
-  balance: number
+  balance: number,
+  alertLevel: number
 ) {
   try {
     // Send email alert
-    await sendLowBalanceAlertEmail(email, businessName, balance, balance);
+    await sendLowBalanceAlertEmail(email, businessName, balance, alertLevel);
 
     // Get notification settings for SMS
     const notifSettings = await prisma.notificationSettings.findUnique({

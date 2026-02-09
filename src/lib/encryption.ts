@@ -1,20 +1,48 @@
 import crypto from 'crypto';
+import { env } from './env';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '';
 
-let KEY: Buffer | null = null;
+/**
+ * AES-256-GCM Encryption Key Requirements:
+ * - Must be exactly 32 bytes (256 bits), represented as a 64-character hex string
+ * - Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+ * - Set via the ENCRYPTION_KEY environment variable
+ * - If missing or malformed, the module will throw at load time to prevent
+ *   silent data corruption or exposure
+ */
 
-function getEncryptionKey(): Buffer {
-  if (!KEY) {
-    if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 64) {
-      throw new Error('ENCRYPTION_KEY must be a 32-byte hex string (64 characters)');
-    }
-    KEY = Buffer.from(ENCRYPTION_KEY, 'hex');
+/**
+ * Validates that the encryption key meets AES-256 requirements.
+ * @param key - The hex-encoded encryption key string
+ * @throws If the key is empty, not valid hex, or not exactly 32 bytes
+ */
+export function validateEncryptionKey(key: string): void {
+  if (!key || key.trim().length === 0) {
+    throw new Error(
+      'ENCRYPTION_KEY is not set. A 32-byte hex-encoded key (64 characters) is required for AES-256-GCM encryption. ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
   }
-  return KEY;
+
+  if (!/^[0-9a-fA-F]+$/.test(key)) {
+    throw new Error(
+      `ENCRYPTION_KEY contains invalid characters. It must be a hex-encoded string (0-9, a-f). Got ${key.length} characters.`
+    );
+  }
+
+  if (key.length !== 64) {
+    throw new Error(
+      `ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes) for AES-256. Got ${key.length} characters.`
+    );
+  }
 }
+
+// Validate at module load — fail fast before any encrypt/decrypt calls
+validateEncryptionKey(env.ENCRYPTION_KEY);
+
+const KEY: Buffer = Buffer.from(env.ENCRYPTION_KEY, 'hex');
 
 /**
  * Encrypts data using AES-256-GCM
@@ -22,7 +50,6 @@ function getEncryptionKey(): Buffer {
  * @returns Encrypted string in format: iv:authTag:encryptedData
  */
 export function encrypt(text: string): string {
-  const KEY = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, KEY, iv);
   
@@ -41,7 +68,6 @@ export function encrypt(text: string): string {
  * @returns Decrypted plain text
  */
 export function decrypt(encryptedData: string): string {
-  const KEY = getEncryptionKey();
   const parts = encryptedData.split(':');
   
   if (parts.length !== 3) {
