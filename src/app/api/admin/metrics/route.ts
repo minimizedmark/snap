@@ -32,7 +32,7 @@ export async function GET() {
       prisma.user.count({ where: { createdAt: { gte: monthStart } } }),
     ]);
 
-    // Auto-upgrade funnel
+    // Abuse prevention / TOS enforcement tracking
     const [
       usersAt10Calls,
       usersAt15Calls,

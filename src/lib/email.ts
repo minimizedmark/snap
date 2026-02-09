@@ -286,7 +286,7 @@ export async function sendEmail(
  */
 function getEmailTemplate(template: string, data: Record<string, any>): string {
   const templates: Record<string, (data: any) => string> = {
-    'upgrade-warning': (d) => `
+    'abuse-warning': (d) => `
       <!DOCTYPE html>
       <html>
         <head>
@@ -297,28 +297,28 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <tr>
               <td style="background-color: #F59E0B; padding: 40px 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">⚠️ Heads Up!</h1>
+                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">⚠️ Important Notice</h1>
               </td>
             </tr>
             <tr>
               <td style="padding: 40px 20px;">
-                <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">You're approaching the Public Line upgrade</h2>
+                <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">Your Snap Number Is Not a Regular Phone Line</h2>
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  You've received <strong>${d.callCount} direct calls</strong> this month on your Snap Calls number.
+                  You've received <strong>${d.callCount} direct calls</strong> this month on your Snap Number.
                 </p>
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  If you're using this number as your main business line (on your website, Google Business, etc.), you'll need the <strong>Public Line plan</strong>.
+                  Your Snap Number is designed for missed call notifications — not as a primary phone line. Using it as a regular phone line is a violation of our Terms of Service.
                 </p>
                 <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                  <p style="color: #92400E; margin: 0; font-weight: 600;">Auto-upgrade at ${d.upgradeThreshold} calls</p>
-                  <p style="color: #92400E; margin: 8px 0 0 0; font-size: 14px;">At ${d.upgradeThreshold} direct calls, you'll automatically upgrade to Public Line ($20/month). Usage fees ($1/call) stay the same.</p>
+                  <p style="color: #92400E; margin: 0; font-weight: 600;">⚠️ Warning: Number will be suspended at ${d.suspensionThreshold} calls</p>
+                  <p style="color: #92400E; margin: 8px 0 0 0; font-size: 14px;">If your direct call count reaches ${d.suspensionThreshold}, your Snap Number will be suspended. To continue using it as a full phone line, consider upgrading to a SnapLine.</p>
                 </div>
                 <p style="color: #6b7280; margin: 20px 0; font-size: 16px; line-height: 1.5;">
-                  <strong>Want to upgrade now?</strong> Beat the rush and get started with Public Line today.
+                  <strong>Want a full-service phone line?</strong> Upgrade to a SnapLine for only $20/month and use your number however you like.
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                    Upgrade to Public Line
+                  <a href="${process.env.APP_URL}/upgrade-snapline" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    Upgrade to SnapLine — $20/mo
                   </a>
                 </div>
               </td>
@@ -335,7 +335,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
       </html>
     `,
     
-    'auto-upgraded-wallet': (d) => `
+    'service-suspended': (d) => `
       <!DOCTYPE html>
       <html>
         <head>
@@ -345,86 +345,37 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; padding: 20px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <tr>
-              <td style="background-color: #0EA5E9; padding: 40px 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">🎉 Upgraded to Public Line</h1>
+              <td style="background-color: #DC2626; padding: 40px 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">🚫 Snap Number Suspended</h1>
               </td>
             </tr>
             <tr>
               <td style="padding: 40px 20px;">
-                <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">Welcome to Public Line!</h2>
+                <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">Your Snap Number Has Been Suspended</h2>
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  You hit ${d.directCalls} direct calls this month, so we've automatically upgraded you to our Public Line plan.
+                  We previously sent you a warning about using your Snap Number as a regular phone line. Your number has now received <strong>${d.callCount} direct calls</strong> this month, which violates our Terms of Service.
+                </p>
+                <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
+                  We're happy that you find SnapCalls so useful! Instead of revoking your number, we've <strong>suspended</strong> it until you upgrade.
                 </p>
                 <div style="background-color: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                  <p style="color: #0C4A6E; margin: 0; font-weight: 600;">First month paid from wallet</p>
-                  <p style="color: #0C4A6E; margin: 8px 0 0 0; font-size: 14px;">We've deducted $20 from your wallet for the first month. Future months will be charged to your card automatically.</p>
+                  <p style="color: #0C4A6E; margin: 0; font-weight: 600;">Upgrade to a SnapLine for only $20/month</p>
+                  <p style="color: #0C4A6E; margin: 8px 0 0 0; font-size: 14px;">A SnapLine is a full-service phone line — use your number however you like with no restrictions. Your existing wallet balance ($${d.walletBalance}) will still be used for missed call responses.</p>
                 </div>
-                <p style="color: #6b7280; margin: 20px 0; font-size: 16px; line-height: 1.5;">
-                  <strong>What you get:</strong>
-                </p>
-                <ul style="color: #6b7280; font-size: 16px; line-height: 1.8;">
-                  <li>Use your number as your main business line</li>
-                  <li>Unlimited direct calls</li>
-                  <li>All existing features (missed call responses, etc.)</li>
-                  <li>$20/month subscription + $1 per missed call response</li>
-                </ul>
+                ${d.phoneNumber && d.phoneNumber !== 'N/A' ? `
+                <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; margin: 20px 0; border-radius: 4px; text-align: center;">
+                  <p style="color: #6b7280; margin: 0; font-size: 14px;">Your suspended number</p>
+                  <p style="color: #000000; margin: 8px 0 0 0; font-size: 20px; font-weight: bold;">${d.phoneNumber}</p>
+                </div>
+                ` : ''}
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                    View Dashboard
+                  <a href="${d.snaplineUpgradeUrl}" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    Upgrade to SnapLine — Only $20/mo
                   </a>
                 </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
-                <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                <p style="color: #6b7280; margin: 20px 0 0 0; font-size: 14px; line-height: 1.5; text-align: center;">
+                  Thank you for your continued support — we truly appreciate it. 💙
                 </p>
-              </td>
-            </tr>
-          </table>
-        </body>
-      </html>
-    `,
-    
-    'auto-upgraded-card': (d) => `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; padding: 20px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <tr>
-              <td style="background-color: #0EA5E9; padding: 40px 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">🎉 Upgraded to Public Line</h1>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 40px 20px;">
-                <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">Welcome to Public Line!</h2>
-                <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  You hit ${d.directCalls} direct calls this month, so we've automatically upgraded you to our Public Line plan.
-                </p>
-                <div style="background-color: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                  <p style="color: #0C4A6E; margin: 0; font-weight: 600;">First month charged to card</p>
-                  <p style="color: #0C4A6E; margin: 8px 0 0 0; font-size: 14px;">We've charged $20 to your card on file. Future months will be billed automatically on the 1st.</p>
-                </div>
-                <p style="color: #6b7280; margin: 20px 0; font-size: 16px; line-height: 1.5;">
-                  <strong>What you get:</strong>
-                </p>
-                <ul style="color: #6b7280; font-size: 16px; line-height: 1.8;">
-                  <li>Use your number as your main business line</li>
-                  <li>Unlimited direct calls</li>
-                  <li>All existing features (missed call responses, etc.)</li>
-                  <li>$20/month subscription + $1 per missed call response</li>
-                </ul>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                    View Dashboard
-                  </a>
-                </div>
               </td>
             </tr>
             <tr>
@@ -457,11 +408,11 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
               <td style="padding: 40px 20px;">
                 <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">Payment Method Needed</h2>
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  You've reached the Public Line upgrade threshold, but we don't have a payment method on file.
+                  Your Snap Number has been suspended for TOS violation, and we need a payment method on file to upgrade you to a SnapLine.
                 </p>
                 <div style="background-color: #FEE2E2; border-left: 4px solid #DC2626; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                  <p style="color: #991B1B; margin: 0; font-weight: 600;">Add a payment method to continue</p>
-                  <p style="color: #991B1B; margin: 8px 0 0 0; font-size: 14px;">Please add a payment method to upgrade to Public Line and continue using your number.</p>
+                  <p style="color: #991B1B; margin: 0; font-weight: 600;">Add a payment method to upgrade</p>
+                  <p style="color: #991B1B; margin: 8px 0 0 0; font-size: 14px;">Please add a payment method to upgrade to a SnapLine ($20/mo) and reactivate your number.</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
@@ -542,7 +493,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
               <td style="padding: 40px 20px;">
                 <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">Service Paused</h2>
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  Your Public Line subscription payment failed. Your service has been paused until payment is successful.
+                  Your SnapLine subscription payment failed. Your service has been paused until payment is successful.
                 </p>
                 <div style="background-color: #FEE2E2; border-left: 4px solid #DC2626; padding: 16px; margin: 20px 0; border-radius: 4px;">
                   <p style="color: #991B1B; margin: 0; font-weight: 600;">Update your payment method</p>
@@ -567,7 +518,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
       </html>
     `,
     
-    'manual-upgrade': () => `
+    'snapline-activated': () => `
       <!DOCTYPE html>
       <html>
         <head>
@@ -578,24 +529,27 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <tr>
               <td style="background-color: #0EA5E9; padding: 40px 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">🎉 Welcome to Public Line!</h1>
+                <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">🎉 Welcome to SnapLine!</h1>
               </td>
             </tr>
             <tr>
               <td style="padding: 40px 20px;">
                 <h2 style="color: #000000; margin: 0 0 20px 0; font-size: 24px;">You're all set!</h2>
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-                  You've successfully upgraded to the Public Line plan.
+                  You've successfully upgraded to a SnapLine. Your number has been reactivated and is ready to use as a full-service phone line.
                 </p>
                 <p style="color: #6b7280; margin: 20px 0; font-size: 16px; line-height: 1.5;">
-                  <strong>What you get:</strong>
+                  <strong>What you get with SnapLine:</strong>
                 </p>
                 <ul style="color: #6b7280; font-size: 16px; line-height: 1.8;">
-                  <li>Use your number as your main business line</li>
-                  <li>Unlimited direct calls</li>
+                  <li>Full-service phone line — use your number however you like</li>
+                  <li>No direct call limits</li>
                   <li>All existing features (missed call responses, etc.)</li>
                   <li>$20/month subscription + $1 per missed call response</li>
                 </ul>
+                <p style="color: #6b7280; margin: 20px 0 0 0; font-size: 14px; line-height: 1.5; text-align: center;">
+                  Thank you for your continued support — we truly appreciate it. 💙
+                </p>
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     Go to Dashboard

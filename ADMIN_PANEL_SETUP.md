@@ -7,8 +7,8 @@ Your admin panel gives you complete visibility and control:
 ### ✅ Real-Time Monitoring
 - Live metrics dashboard (auto-refreshes every 30 seconds)
 - MRR, ARR, revenue tracking
-- User counts (Basic vs Public Line)
-- Auto-upgrade funnel visualization
+- User counts (Basic vs SnapLine)
+- TOS enforcement / abuse prevention tracking
 - Profit margin calculations
 
 ### ✅ User Management
@@ -33,7 +33,7 @@ Your admin panel gives you complete visibility and control:
 - Failed payment tracking
 - Low balance warnings
 - Stuck onboarding detection
-- Auto-upgrade failures
+- TOS violation suspensions
 - Revenue anomaly detection
 
 ---
@@ -159,11 +159,11 @@ curl -X GET https://yourdomain.com/api/cron/check-alerts \
 - Today's revenue
 - Active user count
 
-**Auto-Upgrade Funnel:**
-- Users at 10+ calls (warning sent)
-- Users at 15+ calls (hot leads)
-- Users at 20+ calls (ready to upgrade)
-- Today's auto-upgrades
+**TOS Enforcement Tracking:**
+- Users at 10+ calls (monitoring)
+- Users at 15+ calls (warning sent)
+- Users at 20+ calls (number suspended)
+- Today's SnapLine upgrades
 
 **Money Printer Status:**
 - Total calls this month
@@ -202,9 +202,9 @@ curl -X GET https://yourdomain.com/api/cron/check-alerts \
 **Pre-built filters:**
 - **All Users** - Complete list
 - **Basic** - Basic plan only
-- **Public Line** - Subscription users
+- **SnapLine** - Subscription users
 - **10+ Calls** - Approaching upgrade
-- **20+ Calls** - Ready for auto-upgrade
+- **20+ Calls** - Number suspended (TOS violation)
 - **Paused** - Service paused
 - **Low Balance** - Less than $5
 - **Incomplete Setup** - Didn't fund wallet
@@ -224,7 +224,7 @@ curl -X GET https://yourdomain.com/api/cron/check-alerts \
 
 **Manual Upgrade:**
 - Shows for Basic users at 20+ calls
-- Instantly upgrades to Public Line
+- Instantly upgrades to SnapLine
 - Sends confirmation email
 
 **Add Wallet Funds:**
@@ -327,7 +327,7 @@ curl https://yourdomain.com/api/admin/alerts
 ### Daily Routine
 1. Check dashboard (2 min)
 2. Review any new alerts
-3. Monitor auto-upgrade funnel
+3. Monitor TOS enforcement / suspensions
 4. Check MRR growth
 
 ### Weekly Tasks
@@ -339,7 +339,7 @@ curl https://yourdomain.com/api/admin/alerts
 ### Monthly Review
 1. Revenue analysis
 2. User growth metrics
-3. Auto-upgrade performance
+3. TOS enforcement & SnapLine conversion
 4. Cost optimization
 
 ### Security
@@ -359,7 +359,7 @@ curl https://yourdomain.com/api/admin/alerts
 
 ### User Health
 - **Activation Rate:** % who fund wallet
-- **Conversion Rate:** Basic → Public Line
+- **Conversion Rate:** Basic → SnapLine
 - **Active Users:** Made call last 30 days
 
 ### System Health
@@ -382,14 +382,14 @@ curl https://yourdomain.com/api/admin/alerts
 **Actions available:**
 - Add wallet funds (refunds, credits)
 - Pause service (payment issues)
-- Manual upgrade (skip auto-upgrade)
+- Manual upgrade (upgrade suspended user to SnapLine)
 - Resume service (after pause)
 
 ### Analytics Insights
 
-**Auto-Upgrade Funnel:**
+**TOS Enforcement & SnapLine Conversion:**
 - Conversion rate: aim for 20%+
-- Time to upgrade: track days
+- Time to upgrade: track days from suspension to SnapLine upgrade
 - Warning effectiveness: % who upgrade after warning
 
 **Revenue Optimization:**

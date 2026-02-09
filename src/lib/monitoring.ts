@@ -21,11 +21,6 @@ if (SENTRY_ENABLED) {
     // Adjust traces sample rate based on environment
     tracesSampleRate: ENVIRONMENT === 'production' ? 0.1 : 1.0,
     
-    // Capture unhandled promise rejections
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true }),
-    ],
-    
     // Filter out sensitive data
     beforeSend(event, hint) {
       // Remove sensitive headers
@@ -101,15 +96,10 @@ export function clearUserContext(): void {
  * Start a performance transaction
  * Returns a transaction object or a no-op object if Sentry is disabled
  */
-export function startTransaction(name: string, op: string): Sentry.Transaction | NoOpTransaction {
-  if (!SENTRY_ENABLED) {
-    return new NoOpTransaction();
-  }
-
-  return Sentry.startTransaction({
-    name,
-    op,
-  }) as Sentry.Transaction;
+// Sentry Next.js does not support manual transactions in the same way as Sentry SDKs for Node/Browser.
+// We'll provide a no-op transaction for API compatibility.
+export function startTransaction(name: string, op: string): NoOpTransaction {
+  return new NoOpTransaction();
 }
 
 /**

@@ -306,7 +306,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* AUTO-UPGRADE FUNNEL */}
+        {/* TOS ENFORCEMENT / ABUSE PREVENTION */}
         <div>
           <h2 className="text-2xl font-bold mb-4">🚨 Abuse Prevention Tracking</h2>
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">

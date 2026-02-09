@@ -144,7 +144,7 @@ export async function checkSystemAlerts(): Promise<Alert[]> {
       });
     }
 
-    // 6. Auto-Upgrade Failures (INFO)
+    // 6. TOS Violations - Suspended Numbers (INFO)
     const usersAbove20Calls = await prisma.user.count({
       where: {
         subscriptionType: 'BASIC',
@@ -154,11 +154,11 @@ export async function checkSystemAlerts(): Promise<Alert[]> {
 
     if (usersAbove20Calls > 0) {
       alerts.push({
-        id: 'upgrade-pending',
+        id: 'numbers-suspended',
         level: 'info',
         category: 'users',
-        title: `💡 ${usersAbove20Calls} Users Ready for Auto-Upgrade`,
-        message: `These users hit 20+ calls but haven't upgraded yet - check for payment issues`,
+        title: `🚫 ${usersAbove20Calls} Numbers Suspended (TOS Violation)`,
+        message: `These users hit 20+ direct calls and their numbers have been suspended - awaiting SnapLine upgrade`,
         count: usersAbove20Calls,
         timestamp: now,
       });

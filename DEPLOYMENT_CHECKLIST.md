@@ -25,8 +25,9 @@ setupFeePaid: Boolean (tracks if $5 setup fee was paid)
 subscriptionType: SubscriptionType (BASIC or PUBLIC_LINE)
 subscriptionStatus: String (active/paused/cancelled)
 stripeSubscriptionId: String (links to Stripe subscription)
-directCallsThisMonth: Int (tracks calls for auto-upgrade)
+directCallsThisMonth: Int (tracks direct calls for TOS enforcement)
 upgradeWarningsSent: Int (tracks warning emails sent)
+numberSuspended: Boolean (true if suspended for TOS violation at 20 direct calls)
 ```
 
 ✅ **New Enum:**
@@ -41,21 +42,26 @@ enum SubscriptionType {
 
 ### 3. New Subscription Management (src/lib/subscription.ts)
 ✅ **Core Functions:**
-- `checkAutoUpgrade()` - Checks if user needs auto-upgrade based on direct calls
-- `autoUpgradeToPublicLine()` - Handles auto-upgrade at 20 direct calls
-- `createPublicLineSubscription()` - Creates $20/month Stripe subscription
-- `upgradeToPublicLine()` - Manual user-initiated upgrade
-- `incrementDirectCallCount()` - Tracks direct calls, triggers auto-upgrade check
+- `checkDirectCallLimit()` - Checks if user has hit the 20-call limit
+- `suspendNumberForTOS()` - Suspends the Snap Number at 20 direct calls (TOS violation)
+- `createPublicLineSubscription()` - Creates $20/month Stripe subscription (SnapLine upgrade)
+- `upgradeToPublicLine()` - User-initiated upgrade via link in suspension email
+- `incrementDirectCallCount()` - Tracks direct calls, triggers suspension check
 - `resetMonthlyDirectCallCounts()` - Monthly reset (cron job)
 - `cancelPublicLineSubscription()` - Cancels subscription
 
-✅ **Auto-Upgrade Logic:**
-- Warning email sent at 10 direct calls
-- Auto-upgrade triggers at 20 direct calls
-- Tries wallet first ($20 if available)
-- Falls back to card if wallet insufficient
-- Creates Stripe subscription for future months
-- Service paused if payment fails
+✅ **Direct Call Enforcement Logic:**
+- Warning email sent at 10 direct calls (notifying them Snap Numbers are not regular phone lines)
+- At 20 direct calls → **Number is SUSPENDED** for TOS violation (using Snap Number as a regular phone line)
+- Suspension email sent explaining:
+  - A warning was previously sent about using their Snap Number as a regular phone line
+  - We're happy they find SnapCalls so useful
+  - Instead of revoking the number, it has been suspended
+  - They can upgrade to a **SnapLine for only $20/month** (full-service phone line)
+  - Includes a direct link to upgrade their Snap Number to a SnapLine
+  - Thanks them for their continued support
+- If user upgrades via link → SnapLine subscription created, number reactivated
+- If user does not upgrade → number remains suspended
 
 ---
 
@@ -83,7 +89,7 @@ STRIPE_PUBLIC_LINE_PRICE_ID=price_xxxxxxxxxxxxx  # Create in Stripe Dashboard
 
 **How to create:**
 1. Go to Stripe Dashboard → Products
-2. Create new product: "Public Line Plan"
+2. Create new product: "SnapLine Plan"
 3. Add price: $20.00/month recurring
 4. Copy the Price ID (starts with `price_`)
 5. Add to .env
@@ -165,12 +171,23 @@ export async function GET(req: Request) {
 ### 6. Email Templates
 
 **Required email templates** (update src/lib/email.ts):
-1. `upgrade-warning` - Sent at 10 direct calls
-2. `auto-upgraded-wallet` - Auto-upgrade paid from wallet
-3. `auto-upgraded-card` - Auto-upgrade charged to card
-4. `payment-method-required` - No card on file for auto-upgrade
-5. `payment-failed` - Subscription payment failed
-6. `manual-upgrade` - User manually upgraded
+
+1. `direct-call-warning` - Sent at 10 direct calls
+   - Warns user that their Snap Number is not a regular phone line
+   - Explains continued use as a regular line violates TOS
+   - Encourages them to consider upgrading to a SnapLine
+
+2. `number-suspended` - Sent at 20 direct calls (TOS violation)
+   - Reminds them that a warning was previously sent about using their Snap Number as a regular phone line
+   - Tells them we're happy they find SnapCalls so useful
+   - Explains that instead of revoking their number, it has been **suspended**
+   - Offers them the option to upgrade to a **SnapLine for only $20/month** (full-service phone line)
+   - Includes a direct link to upgrade their Snap Number to a SnapLine
+   - Thanks them for their continued support
+
+3. `snapline-upgrade-success` - User upgraded to SnapLine via suspension email link
+4. `payment-failed` - Subscription payment failed
+5. `payment-method-required` - No card on file when upgrading
 
 ---
 
@@ -191,7 +208,8 @@ export async function GET(req: Request) {
 1. Customer deposits to wallet ($20 min, bonuses at $30+)
 2. $5 setup fee deducted from wallet (one-time)
 3. $1/call deducted from wallet for each missed call
-4. If 20+ direct calls → Auto-upgrade to PUBLIC_LINE
+4. Warning email at 10 direct calls (Snap Number is not a regular phone line)
+5. If 20+ direct calls → **Number SUSPENDED** for TOS violation + email with upgrade link to SnapLine ($20/mo)
 
 ### For PUBLIC_LINE Plan (Subscription):
 1. $20/month charged to card automatically
@@ -207,8 +225,9 @@ Before deploying:
 - [ ] Run database migration
 - [ ] Test wallet deposit with new bonus tiers
 - [ ] Test setup fee deduction
-- [ ] Test auto-upgrade at 20 calls
-- [ ] Test manual upgrade
+- [ ] Test number suspension at 20 direct calls
+- [ ] Test suspension email with upgrade link
+- [ ] Test user upgrade to SnapLine via email link
 - [ ] Test subscription cancellation
 - [ ] Test monthly billing webhook
 - [ ] Test payment failure handling
