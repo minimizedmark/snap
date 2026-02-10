@@ -2,29 +2,16 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 // Pricing constants
 export const PRICING = {
-  // SnapCalls Basic tier: $1.00 deducted per call
-  // SnapCalls Pro tier: $1.50 deducted per call (includes AI transcription + dynamic responses)
+  // SnapCalls: $0.99 per call — all calls include contextual AI SMS
+  // Every call gets: voicemail transcription + AI-powered personalized response
   // Effective cost to user is lower when they load wallet with bonuses:
-  //   - $20 load (0% bonus): Basic=$1.00/call, Pro=$1.50/call
-  //   - $100 load (50% bonus): Basic=$0.67/call, Pro=$1.00/call (they got 50% more credits)
-  SNAPCALLS_BASIC: {
-    PRICE: 1.0,             // Amount deducted from wallet per call
-  },
-  SNAPCALLS_PRO: {
-    PRICE: 1.5,             // Amount deducted from wallet per call (includes AI costs)
-  },
-  AI_FEATURES: {
-    // BASIC tier: AI template assistance with monthly limits
-    BASIC_MONTHLY_LIMITS: {
-      standardResponse: 2,    // 2 free AI-assisted changes per month
-      voicemailResponse: 2,   // 2 free AI-assisted changes per month
-      afterHoursResponse: 1,  // 1 free AI-assisted change per month
-    },
-    TEMPLATE_CHANGE_OVERAGE: 0.25,  // $0.25 per AI change after free limit
+  //   - $20 load (0% bonus): $0.99/call
+  //   - $100 load (50% bonus): $0.66/call (they got 50% more credits)
+  SNAPCALLS: {
+    PRICE: 0.99,  // Amount deducted from wallet per call
   },
   TRANSCRIPTION: {
-    GPT4O_MINI: 0.003,  // Cost per minute for voicemail transcription (our cost)
-    // PRO tier: transcription included in $1.50/call, no extra charge to user
+    GPT4O_MINI: 0.003,  // Cost per minute for voicemail transcription (our cost, included in $0.99)
   },
   WALLET_DEPOSITS: {
     20: { bonus: 0, description: '0% bonus' },
@@ -42,17 +29,16 @@ export const PRICING = {
     DEFAULT_THRESHOLD: 10.0,
     DEFAULT_AMOUNT: 20.0,
   },
-  MINIMUM_BALANCE: 0.67,    // Minimum for cheapest call (Basic with max bonus)
+  MINIMUM_BALANCE: 0.66,    // Minimum for cheapest call ($0.99 with 50% bonus)
   LOW_BALANCE_ALERTS: [10.0, 5.0, 2.0],
 } as const;
 
-export type SnapCallsTier = 'BASIC' | 'PRO';
+
 
 /**
  * Parameters for calculating itemized call costs
  */
 export interface CallPricingParams {
-  tier: SnapCallsTier;
   isVip: boolean;
   hasVoicemail: boolean;
   sequencesEnabled: boolean;
@@ -68,7 +54,7 @@ export interface CallPricingParams {
  * Itemized breakdown of call costs
  */
 export interface CallPricingResult {
-  /** Base cost for the call ($1.00 for BASIC, $1.50 for PRO) */
+  /** Base cost for the call ($0.99) */
   baseCost: number;
   /** Cost for follow-up sequences ($0.50 if enabled) */
   sequencesCost: number;
@@ -82,15 +68,13 @@ export interface CallPricingResult {
   transcriptionCost: number;
   /** Total cost to deduct from wallet */
   totalCost: number;
-  /** Tier used for pricing */
-  tier: SnapCallsTier;
 }
 
 /**
- * Calculates itemized call costs based on tier and enabled features.
+ * Calculates itemized call costs.
  * 
  * Pricing breakdown:
- * - Base: $1.00 (BASIC) or $1.50 (PRO, includes AI transcription + response generation)
+ * - Base: $0.99 (includes AI transcription + contextual response)
  * - Follow-up sequences: +$0.50 if enabled
  * - Caller recognition: +$0.25 if enabled AND repeat caller
  * - Two-way communication: +$0.50 if enabled
@@ -99,16 +83,13 @@ export interface CallPricingResult {
  * 
  * Note: The actual cost to the user is lower when they loaded wallet with bonuses.
  * For example, with 50% bonus ($100 load gets $150 credits):
- *   - Basic tier: $1.00 deducted, but effective cost is $0.67
- *   - Pro tier: $1.50 deducted, but effective cost is $1.00
+ *   - $0.99 deducted, but effective cost is $0.66
  * 
- * @param params - Call pricing parameters including tier and feature flags
+ * @param params - Call pricing parameters with feature flags
  * @returns Itemized cost breakdown with total
  */
 export function calculateCallCost(params: CallPricingParams): CallPricingResult {
-  const baseCost = params.tier === 'BASIC' 
-    ? PRICING.SNAPCALLS_BASIC.PRICE
-    : PRICING.SNAPCALLS_PRO.PRICE;
+  const baseCost = PRICING.SNAPCALLS.PRICE;
 
   const sequencesCost = params.sequencesEnabled ? 0.50 : 0;
   
@@ -132,7 +113,6 @@ export function calculateCallCost(params: CallPricingParams): CallPricingResult 
     vipPriorityCost,
     transcriptionCost,
     totalCost,
-    tier: params.tier,
   };
 }
 
@@ -141,16 +121,10 @@ export function calculateCallCost(params: CallPricingParams): CallPricingResult 
  * Used for display purposes to show users their actual cost per call
  * 
  * Example: User loads $100, gets $150 (50% bonus)
- * - Basic: $1.00 deducted / 1.5 = $0.67 effective cost
- * - Pro: $1.50 deducted / 1.5 = $1.00 effective cost
+ * - $0.99 deducted / 1.5 = $0.66 effective cost
  */
-export function getEffectiveCallCost(tier: SnapCallsTier, bonusPercentage: number): number {
-  const deductedAmount = tier === 'BASIC' 
-    ? PRICING.SNAPCALLS_BASIC.PRICE
-    : PRICING.SNAPCALLS_PRO.PRICE;
-  
-  // Effective cost = amount deducted / (1 + bonus percentage)
-  return deductedAmount / (1 + bonusPercentage);
+export function getEffectiveCallCost(bonusPercentage: number): number {
+  return PRICING.SNAPCALLS.PRICE / (1 + bonusPercentage);
 }
 
 /**

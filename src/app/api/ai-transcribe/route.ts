@@ -8,11 +8,10 @@ import { formatBusinessHours } from '@/lib/utils';
 /**
  * POST /api/ai-transcribe
  * 
- * PRO tier only — Transcribes a voicemail and generates an AI-powered SMS response.
+ * Transcribes a voicemail and generates an AI-powered SMS response.
+ * Available to all users — cost is included in the $0.99/call price.
  * 
- * This endpoint is called during call processing for PRO tier users when
- * a voicemail is detected. The cost is absorbed into the $1.50/call price.
- * 
+ * This endpoint is called during call processing when a voicemail is detected.
  * Can also be called manually from the dashboard to re-transcribe/re-generate
  * for a specific call log entry.
  * 
@@ -43,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
 
-    // Check PRO tier
+    // Fetch user data
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -54,13 +53,6 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    if ((user as any).callTier !== 'PRO') {
-      return NextResponse.json(
-        { error: 'AI transcription is only available for PRO tier users. Upgrade to PRO for $1.50/call to enable AI features.' },
-        { status: 403 }
-      );
     }
 
     if (!user.messageTemplates || !user.businessSettings) {

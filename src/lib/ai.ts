@@ -7,12 +7,11 @@ import { env } from './env';
  * 1. OpenAI GPT-4o Mini - Voicemail transcription ($0.003/min, our cost)
  * 2. RunPod Qwen3-4B   - Text generation for AI responses + template assistance
  * 
- * PRO tier: Both included in $1.50/call price (no extra charge)
- * BASIC tier: Qwen3-4B for template assistance only (limited free, then $0.25/change)
+ * All AI features included in $0.99/call — every call gets contextual SMS.
  */
 
 // ============================================================
-// GPT-4o Mini — Voicemail Transcription (PRO tier only)
+// GPT-4o Mini — Voicemail Transcription
 // ============================================================
 
 export interface TranscriptionResult {
@@ -24,7 +23,7 @@ export interface TranscriptionResult {
 /**
  * Transcribes a voicemail audio file using OpenAI GPT-4o Mini audio API.
  * 
- * Cost: ~$0.003/minute (our cost, absorbed into PRO $1.50/call)
+ * Cost: ~$0.003/minute (our cost, included in $0.99/call)
  * 
  * @param audioUrl - Twilio voicemail recording URL
  * @returns Transcription text, duration, and our cost
@@ -114,7 +113,7 @@ export interface AiGenerationResult {
 export interface AiGenerateParams {
   /** The prompt/instruction for text generation */
   prompt: string;
-  /** User's custom AI instructions (PRO tier) */
+  /** User's custom AI instructions */
   aiInstructions?: string | null;
   /** Business context for better responses */
   businessName?: string;
@@ -126,9 +125,9 @@ export interface AiGenerateParams {
 
 /**
  * Generates text using RunPod Qwen3-4B endpoint.
- * Used for both:
- * - PRO tier: Dynamic AI-generated call responses (included in $1.50/call)
- * - BASIC tier: AI template assistance (limited free, then $0.25/change)
+ * Used for:
+ * - Dynamic AI-generated call responses (included in $0.99/call)
+ * - AI template assistance (unlimited, no extra charge)
  * 
  * @param params - Generation parameters
  * @returns Generated text and token usage
@@ -216,7 +215,7 @@ export async function generateAiResponse(params: AiGenerateParams): Promise<AiGe
 
 
 // ============================================================
-// AI Template Assistance (BASIC + PRO)
+// AI Template Assistance
 // ============================================================
 
 export interface TemplateAssistRequest {
@@ -228,13 +227,13 @@ export interface TemplateAssistRequest {
   userRequest: string;
   /** Business name for context */
   businessName: string;
-  /** PRO user's custom AI instructions */
+  /** User's custom AI instructions */
   aiInstructions?: string | null;
 }
 
 /**
  * Generates an improved message template based on user's request.
- * Used by both BASIC and PRO tiers (billing is handled by the API route).
+ * Available to all users — unlimited, no extra charge.
  */
 export async function generateTemplateImprovement(params: TemplateAssistRequest): Promise<AiGenerationResult> {
   const { templateType, currentTemplate, userRequest, businessName, aiInstructions } = params;
@@ -263,7 +262,7 @@ Generate ONLY the improved template text. Keep it under 160 characters for SMS. 
 
 
 // ============================================================
-// AI Call Response Generation (PRO tier only)
+// AI Call Response Generation
 // ============================================================
 
 export interface AiCallResponseParams {
@@ -287,7 +286,7 @@ export interface AiCallResponseParams {
 
 /**
  * Generates a dynamic, context-aware SMS response based on voicemail content.
- * PRO tier only - cost included in $1.50/call.
+ * Cost included in $0.99/call.
  * 
  * Flow:
  * 1. Takes voicemail transcription + business context

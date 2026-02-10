@@ -165,13 +165,13 @@ async function processCallAsync(req: NextRequest) {
       callerName: callerName || undefined,
     });
 
-    // ── PRO tier AI features ──────────────────────────────────────
-    // If PRO tier and voicemail exists, transcribe and generate AI response
+    // ── AI-powered contextual response ─────────────────────────────
+    // All calls with voicemail get AI transcription + personalized response
     let voicemailTranscription: string | null = null;
 
-    if ((user as any).callTier === 'PRO' && hasVoicemail && voicemailUrl) {
+    if (hasVoicemail && voicemailUrl) {
       try {
-        // Transcribe voicemail using GPT-4o Mini (cost: ~$0.003/min, included in $1.50)
+        // Transcribe voicemail using GPT-4o Mini (cost included in $0.99/call)
         const transcription = await transcribeVoicemail(voicemailUrl);
         voicemailTranscription = transcription.text;
 
@@ -188,7 +188,7 @@ async function processCallAsync(req: NextRequest) {
             defaultTemplate: messageSent,
           });
           messageSent = aiResponse; // Replace template with AI response
-          console.log('🤖 PRO AI response generated for call:', twilioCallSid);
+          console.log('🤖 AI contextual response generated for call:', twilioCallSid);
         }
       } catch (aiError) {
         console.error('⚠️  AI processing failed, using default template:', aiError);
@@ -215,7 +215,6 @@ async function processCallAsync(req: NextRequest) {
     };
 
     const pricing = calculateCallCost({
-      tier: ((user as any).callTier || 'BASIC') as 'BASIC' | 'PRO',
       isVip,
       hasVoicemail,
       sequencesEnabled: features.sequencesEnabled,
@@ -308,7 +307,7 @@ async function processCallAsync(req: NextRequest) {
         isBusinessHours,
         hasVoicemail,
         voicemailUrl: voicemailUrl || null,
-        voicemailTranscription: voicemailTranscription, // AI transcription for PRO tier
+        voicemailTranscription: voicemailTranscription, // AI transcription
         responseType,
         messageSent,
         smsStatus,

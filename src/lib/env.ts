@@ -119,7 +119,7 @@ export const env = Object.freeze({
   CRON_SECRET: getRequiredEnv('CRON_SECRET', 'cron-secret-dev-change-in-prod'),
   
   // AI Services
-  OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY', ''), // GPT-4o Mini voicemail transcription (PRO tier)
+  OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY', ''), // GPT-4o Mini voicemail transcription
   RUNPOD_ENDPOINT: getOptionalEnv('RUNPOD_ENDPOINT', ''), // Qwen3-4B text generation endpoint
   
   // Node env

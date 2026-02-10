@@ -32,7 +32,7 @@ export async function GET() {
  * PATCH /api/user/session
  * 
  * Update user settings. Currently supports:
- * - aiInstructions: Custom AI instructions for PRO tier users
+ * - aiInstructions: Custom AI instructions for personalized responses
  */
 export async function PATCH(req: NextRequest) {
   try {
@@ -47,21 +47,12 @@ export async function PATCH(req: NextRequest) {
 
     // Handle AI instructions update
     if ('aiInstructions' in body) {
-      // Verify user is PRO tier
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { callTier: true },
       });
 
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
-      }
-
-      if ((user as any).callTier !== 'PRO') {
-        return NextResponse.json(
-          { error: 'AI instructions are only available for PRO tier users' },
-          { status: 403 }
-        );
       }
 
       const aiInstructions = body.aiInstructions;

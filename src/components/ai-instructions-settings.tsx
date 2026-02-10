@@ -8,8 +8,8 @@ interface AiInstructionsSettingsProps {
 }
 
 /**
- * AI Instructions Settings — PRO tier component
- * Allows PRO users to customize how AI generates responses for their business.
+ * AI Instructions Settings
+ * Allows users to customize how AI generates responses for their business.
  * These instructions are used by Qwen3-4B when generating:
  * - Dynamic call responses (voicemail-based)
  * - Template improvement suggestions
@@ -68,9 +68,6 @@ export function AiInstructionsSettings({
         <h3 className="text-base font-semibold text-purple-900">
           AI Response Instructions
         </h3>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 font-medium">
-          PRO
-        </span>
       </div>
       <p className="text-sm text-purple-700 mb-4">
         Customize how AI generates responses for your business. These instructions guide
@@ -144,7 +141,7 @@ export function AiInstructionsSettings({
           <li>• When a caller leaves a voicemail, AI transcribes it and reads your instructions</li>
           <li>• A personalized SMS response is generated based on the voicemail content</li>
           <li>• Your instructions shape the tone, style, and content of every AI response</li>
-          <li>• All AI features are included in your PRO tier — no extra charges</li>
+          <li>• All AI features are included in your plan — no extra charges</li>
         </ul>
       </div>
     </div>
