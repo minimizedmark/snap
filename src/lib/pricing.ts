@@ -3,7 +3,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 // Pricing constants
 export const PRICING = {
   // SnapCalls Basic tier: $1.00 deducted per call
-  // SnapCalls Pro tier: $1.50 deducted per call (includes voicemail transcription)
+  // SnapCalls Pro tier: $1.50 deducted per call (includes AI transcription + dynamic responses)
   // Effective cost to user is lower when they load wallet with bonuses:
   //   - $20 load (0% bonus): Basic=$1.00/call, Pro=$1.50/call
   //   - $100 load (50% bonus): Basic=$0.67/call, Pro=$1.00/call (they got 50% more credits)
@@ -11,7 +11,20 @@ export const PRICING = {
     PRICE: 1.0,             // Amount deducted from wallet per call
   },
   SNAPCALLS_PRO: {
-    PRICE: 1.5,             // Amount deducted from wallet per call
+    PRICE: 1.5,             // Amount deducted from wallet per call (includes AI costs)
+  },
+  AI_FEATURES: {
+    // BASIC tier: AI template assistance with monthly limits
+    BASIC_MONTHLY_LIMITS: {
+      standardResponse: 2,    // 2 free AI-assisted changes per month
+      voicemailResponse: 2,   // 2 free AI-assisted changes per month
+      afterHoursResponse: 1,  // 1 free AI-assisted change per month
+    },
+    TEMPLATE_CHANGE_OVERAGE: 0.25,  // $0.25 per AI change after free limit
+  },
+  TRANSCRIPTION: {
+    GPT4O_MINI: 0.003,  // Cost per minute for voicemail transcription (our cost)
+    // PRO tier: transcription included in $1.50/call, no extra charge to user
   },
   WALLET_DEPOSITS: {
     20: { bonus: 0, description: '0% bonus' },
@@ -77,7 +90,7 @@ export interface CallPricingResult {
  * Calculates itemized call costs based on tier and enabled features.
  * 
  * Pricing breakdown:
- * - Base: $1.00 (BASIC) or $1.50 (PRO)
+ * - Base: $1.00 (BASIC) or $1.50 (PRO, includes AI transcription + response generation)
  * - Follow-up sequences: +$0.50 if enabled
  * - Caller recognition: +$0.25 if enabled AND repeat caller
  * - Two-way communication: +$0.50 if enabled

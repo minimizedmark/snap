@@ -21,6 +21,7 @@ model User {
   // Subscription tracking
   setupFeePaid         Boolean          @default(false) @map("setup_fee_paid")
   subscriptionType     SubscriptionType @default(BASIC) @map("subscription_type")
+  callTier             CallTier         @default(BASIC) @map("call_tier") // BASIC=$1/call, PRO=$1.50/call with AI
   subscriptionStatus   String?          @map("subscription_status") // "active" | "paused" | "cancelled"
   stripeSubscriptionId String?          @unique @map("stripe_subscription_id")
   directCallsThisMonth Int              @default(0) @map("direct_calls_this_month")
@@ -50,6 +51,12 @@ model User {
 enum SubscriptionType {
   BASIC
   SNAPLINE
+  @@schema("public")
+}
+
+enum CallTier {
+  BASIC  // $1.00/call - standard SMS responses
+  PRO    // $1.50/call - includes AI transcription + dynamic responses
   @@schema("public")
 }
 
@@ -144,11 +151,12 @@ model BusinessSettings {
 }
 
 model MessageTemplates {
-  id                   String @id @default(cuid())
-  userId               String @unique @map("user_id")
-  standardResponse     String @map("standard_response")
-  voicemailResponse    String @map("voicemail_response")
-  afterHoursResponse   String @map("after_hours_response")
+  id                   String  @id @default(cuid())
+  userId               String  @unique @map("user_id")
+  standardResponse     String  @map("standard_response")
+  voicemailResponse    String  @map("voicemail_response")
+  afterHoursResponse   String  @map("after_hours_response")
+  aiInstructions       String? @map("ai_instructions") // PRO tier only - custom AI guidance for response generation
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

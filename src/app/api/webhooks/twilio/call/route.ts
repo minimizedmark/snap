@@ -5,6 +5,7 @@ import { debitWallet, shouldSendLowBalanceAlert, recordLowBalanceAlert } from '@
 import { sendOwnerNotification, normalizePhoneNumber } from '@/lib/twilio';
 import { sendSmsFromNumber } from '@/lib/twilio-provisioning';
 import { sendLowBalanceAlertEmail, sendMissedCallNotificationEmail } from '@/lib/email';
+import { transcribeVoicemail, generateCallResponse } from '@/lib/ai';
 import {
   isWithinBusinessHours,
   formatBusinessHours,
@@ -152,17 +153,48 @@ async function processCallAsync(req: NextRequest) {
       messageTemplate = user.messageTemplates.standardResponse;
     }
 
-    // Substitute variables
+    // Substitute variables for default template
     const formattedHours = formatBusinessHours(
       user.businessSettings.hoursStart,
       user.businessSettings.hoursEnd
     );
 
-    const messageSent = substituteMessageVariables(messageTemplate, {
+    let messageSent = substituteMessageVariables(messageTemplate, {
       businessName: user.businessSettings.businessName,
       businessHours: formattedHours,
       callerName: callerName || undefined,
     });
+
+    // ── PRO tier AI features ──────────────────────────────────────
+    // If PRO tier and voicemail exists, transcribe and generate AI response
+    let voicemailTranscription: string | null = null;
+
+    if ((user as any).callTier === 'PRO' && hasVoicemail && voicemailUrl) {
+      try {
+        // Transcribe voicemail using GPT-4o Mini (cost: ~$0.003/min, included in $1.50)
+        const transcription = await transcribeVoicemail(voicemailUrl);
+        voicemailTranscription = transcription.text;
+
+        // Generate AI-powered response using Qwen3-4B
+        if (voicemailTranscription && !voicemailTranscription.startsWith('[')) {
+          const aiResponse = await generateCallResponse({
+            voicemailTranscription,
+            businessName: user.businessSettings.businessName,
+            businessHours: formattedHours,
+            isBusinessHours,
+            isVip,
+            callerName,
+            aiInstructions: (user.messageTemplates as any).aiInstructions,
+            defaultTemplate: messageSent,
+          });
+          messageSent = aiResponse; // Replace template with AI response
+          console.log('🤖 PRO AI response generated for call:', twilioCallSid);
+        }
+      } catch (aiError) {
+        console.error('⚠️  AI processing failed, using default template:', aiError);
+        // Fall through to default template (messageSent unchanged)
+      }
+    }
 
     // Check if caller is repeat caller (for recognition cost)
     const previousCalls = await prisma.callLog.count({
@@ -183,7 +215,7 @@ async function processCallAsync(req: NextRequest) {
     };
 
     const pricing = calculateCallCost({
-      tier: user.subscriptionType === 'SNAPLINE' ? 'PRO' : 'BASIC',
+      tier: ((user as any).callTier || 'BASIC') as 'BASIC' | 'PRO',
       isVip,
       hasVoicemail,
       sequencesEnabled: features.sequencesEnabled,
@@ -276,6 +308,7 @@ async function processCallAsync(req: NextRequest) {
         isBusinessHours,
         hasVoicemail,
         voicemailUrl: voicemailUrl || null,
+        voicemailTranscription: voicemailTranscription, // AI transcription for PRO tier
         responseType,
         messageSent,
         smsStatus,
