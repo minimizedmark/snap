@@ -86,8 +86,8 @@ export const env = Object.freeze({
   // Database
   DATABASE_URL: getRequiredEnv('DATABASE_URL', 'postgresql://localhost:5432/snapcalls_dev'),
   
-  // Encryption (32-byte key required)
-  ENCRYPTION_KEY: getRequiredEnv('ENCRYPTION_KEY', 'placeholder-32-byte-key-dev-xxxxxxxxxxxx'),
+  // Encryption (32-byte hex key required — 64 hex chars)
+  ENCRYPTION_KEY: getRequiredEnv('ENCRYPTION_KEY', '0000000000000000000000000000000000000000000000000000000000000000'),
   
   // NextAuth
   NEXTAUTH_SECRET: getRequiredEnv('NEXTAUTH_SECRET', 'nextauth-secret-dev-change-in-prod'),
