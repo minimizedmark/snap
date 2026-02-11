@@ -4,14 +4,14 @@ import { env } from './env';
  * AI Service Layer
  * 
  * Two AI backends:
- * 1. OpenAI GPT-4o Mini - Voicemail transcription ($0.003/min, our cost)
- * 2. RunPod Qwen3-4B   - Text generation for AI responses + template assistance
+ * 1. OpenAI Whisper-1   - Voicemail transcription ($0.006/min, our cost)
+ * 2. DialoGPT-medium    - Text generation for AI responses + template assistance
  * 
  * All AI features included in $0.99/call — every call gets contextual SMS.
  */
 
 // ============================================================
-// GPT-4o Mini — Voicemail Transcription
+// OpenAI Whisper-1 — Voicemail Transcription
 // ============================================================
 
 export interface TranscriptionResult {
@@ -21,9 +21,9 @@ export interface TranscriptionResult {
 }
 
 /**
- * Transcribes a voicemail audio file using OpenAI GPT-4o Mini audio API.
+ * Transcribes a voicemail audio file using OpenAI Whisper-1 API.
  * 
- * Cost: ~$0.003/minute (our cost, included in $0.99/call)
+ * Cost: ~$0.006/minute (our cost, included in $0.99/call)
  * 
  * @param audioUrl - Twilio voicemail recording URL
  * @returns Transcription text, duration, and our cost
@@ -58,7 +58,7 @@ export async function transcribeVoicemail(audioUrl: string): Promise<Transcripti
     // Create form data for Whisper API
     const formData = new FormData();
     formData.append('file', audioBlob, 'voicemail.wav');
-    formData.append('model', 'gpt-4o-mini-transcribe');
+    formData.append('model', 'whisper-1');
     formData.append('response_format', 'verbose_json');
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -76,7 +76,7 @@ export async function transcribeVoicemail(audioUrl: string): Promise<Transcripti
 
     const result = await response.json();
     const durationMinutes = (result.duration || 0) / 60;
-    const cost = durationMinutes * 0.003; // $0.003/min
+    const cost = durationMinutes * 0.006; // $0.006/min (Whisper-1)
 
     console.log('✅ Voicemail transcribed:', {
       durationSeconds: result.duration,
@@ -102,7 +102,7 @@ export async function transcribeVoicemail(audioUrl: string): Promise<Transcripti
 
 
 // ============================================================
-// RunPod Qwen3-4B — AI Text Generation
+// DialoGPT-medium — AI Text Generation
 // ============================================================
 
 export interface AiGenerationResult {
@@ -124,7 +124,7 @@ export interface AiGenerateParams {
 }
 
 /**
- * Generates text using RunPod Qwen3-4B endpoint.
+ * Generates text using DialoGPT-medium endpoint.
  * Used for:
  * - Dynamic AI-generated call responses (included in $0.99/call)
  * - AI template assistance (unlimited, no extra charge)
@@ -133,76 +133,80 @@ export interface AiGenerateParams {
  * @returns Generated text and token usage
  */
 export async function generateAiResponse(params: AiGenerateParams): Promise<AiGenerationResult> {
-  const endpoint = env.RUNPOD_ENDPOINT;
+  const endpoint = env.DIALOGPT_ENDPOINT;
   
   if (!endpoint || endpoint.startsWith('DEV_ONLY_')) {
-    console.warn('⚠️  RunPod endpoint not configured, returning placeholder response');
+    console.warn('⚠️  DialoGPT endpoint not configured, returning placeholder response');
     return {
-      text: '[AI response unavailable - RunPod endpoint not configured]',
+      text: '[AI response unavailable - DialoGPT endpoint not configured]',
       tokensUsed: 0,
     };
   }
 
   const { prompt, aiInstructions, businessName, maxTokens = 256, temperature = 0.7 } = params;
 
-  // Build system message with context
-  let systemMessage = 'You are a professional business SMS assistant. ';
-  systemMessage += 'Generate concise, friendly, and professional text message responses. ';
-  systemMessage += 'Keep messages under 160 characters when possible for SMS optimization. ';
+  // Build context prompt for DialoGPT
+  let contextPrompt = '';
   
   if (businessName) {
-    systemMessage += `You are responding on behalf of ${businessName}. `;
+    contextPrompt += `Business: ${businessName}. `;
   }
 
   if (aiInstructions) {
-    systemMessage += `\n\nCustom instructions from the business owner:\n${aiInstructions}`;
+    contextPrompt += `Instructions: ${aiInstructions}. `;
   }
 
+  contextPrompt += `Generate a concise, professional SMS response (under 160 chars). `;
+  contextPrompt += prompt;
+
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Add RunPod API key if available
+    if (env.RUNPOD_API_KEY) {
+      headers['Authorization'] = `Bearer ${env.RUNPOD_API_KEY}`;
+    }
+
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         input: {
-          messages: [
-            { role: 'system', content: systemMessage },
-            { role: 'user', content: prompt },
-          ],
-          max_tokens: maxTokens,
+          prompt: contextPrompt,
+          max_new_tokens: maxTokens,
           temperature,
-          stop: ['\n\n'], // Stop at double newline for clean SMS formatting
         },
       }),
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`RunPod generation failed: ${response.status} - ${errorBody}`);
+      throw new Error(`DialoGPT generation failed: ${response.status} - ${errorBody}`);
     }
 
     const result = await response.json();
     
-    // RunPod serverless returns output in different formats depending on the handler
-    const generatedText = result.output?.text 
-      || result.output?.choices?.[0]?.message?.content
-      || result.output?.choices?.[0]?.text
-      || result.output
-      || '';
-    
-    const tokensUsed = result.output?.usage?.total_tokens 
-      || result.output?.usage?.completion_tokens
-      || 0;
+    // Handle various response formats from inference endpoints
+    let generatedText = '';
+    if (Array.isArray(result)) {
+      generatedText = result[0]?.generated_text || result[0]?.text || '';
+    } else if (result.generated_text) {
+      generatedText = result.generated_text;
+    } else if (result.output) {
+      generatedText = result.output?.text || result.output?.generated_text || String(result.output);
+    } else {
+      generatedText = String(result);
+    }
 
     console.log('✅ AI response generated:', {
-      tokensUsed,
       textLength: generatedText.length,
     });
 
     return {
       text: typeof generatedText === 'string' ? generatedText.trim() : String(generatedText).trim(),
-      tokensUsed,
+      tokensUsed: 0,
     };
   } catch (error) {
     console.error('❌ AI generation error:', error);
@@ -290,7 +294,7 @@ export interface AiCallResponseParams {
  * 
  * Flow:
  * 1. Takes voicemail transcription + business context
- * 2. Uses Qwen3-4B to generate a personalized response
+ * 2. Uses DialoGPT-medium to generate a personalized response
  * 3. Falls back to default template if AI fails
  */
 export async function generateCallResponse(params: AiCallResponseParams): Promise<string> {

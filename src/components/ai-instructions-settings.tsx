@@ -10,7 +10,7 @@ interface AiInstructionsSettingsProps {
 /**
  * AI Instructions Settings
  * Allows users to customize how AI generates responses for their business.
- * These instructions are used by Qwen3-4B when generating:
+ * These instructions are used by the AI when generating:
  * - Dynamic call responses (voicemail-based)
  * - Template improvement suggestions
  */

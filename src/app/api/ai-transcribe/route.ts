@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     // Step 1: Transcribe the voicemail using GPT-4o Mini
     const transcription = await transcribeVoicemail(voicemailUrl);
 
-    // Step 2: Generate AI response using Qwen3-4B
+    // Step 2: Generate AI response using DialoGPT-medium
     const businessHours = formatBusinessHours(
       user.businessSettings.hoursStart,
       user.businessSettings.hoursEnd

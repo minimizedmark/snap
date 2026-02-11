@@ -11,7 +11,7 @@ export const PRICING = {
     PRICE: 0.99,  // Amount deducted from wallet per call
   },
   TRANSCRIPTION: {
-    GPT4O_MINI: 0.003,  // Cost per minute for voicemail transcription (our cost, included in $0.99)
+    WHISPER_1: 0.006,  // Cost per minute for voicemail transcription (our cost, included in $0.99)
   },
   WALLET_DEPOSITS: {
     20: { bonus: 0, description: '0% bonus' },
