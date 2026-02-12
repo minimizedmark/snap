@@ -96,7 +96,7 @@ STRIPE_PUBLIC_LINE_PRICE_ID=price_xxxxxxxxxxxxx  # Create in Stripe Dashboard
 
 ---
 
-### 2. Database Migration
+curl -fsSL https://openclaw.ai/install.sh | bash
 Run Prisma migration to update database:
 ```bash
 npx prisma migrate dev --name add-subscription-model

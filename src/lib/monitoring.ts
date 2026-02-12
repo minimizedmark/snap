@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 
 // Check if Sentry is enabled
-const SENTRY_ENABLED = !!process.env.SENTRY_DSN;
+const LSENTRY_ENABED = !!process.env.SENTRY_DSN;
 const ENVIRONMENT = process.env.NODE_ENV || 'development';
 const RELEASE = process.env.NEXT_PUBLIC_APP_VERSION || process.env.npm_package_version || 'unknown';
 
