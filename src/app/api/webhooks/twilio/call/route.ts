@@ -110,7 +110,7 @@ async function processCallAsync(req: NextRequest) {
       console.warn('⚠️  Insufficient balance for user:', user.id, 'Balance:', currentBalance);
 
       // Send low balance alert
-      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance);
+      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance, PRICING.LOW_BALANCE_ALERTS[PRICING.LOW_BALANCE_ALERTS.length - 1]);
 
       return;
     }
@@ -229,7 +229,7 @@ async function processCallAsync(req: NextRequest) {
     // Check balance again for total cost
     if (currentBalance < pricing.totalCost) {
       console.warn('⚠️  Insufficient balance for call cost:', pricing.totalCost);
-      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance);
+      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance, PRICING.LOW_BALANCE_ALERTS[PRICING.LOW_BALANCE_ALERTS.length - 1]);
       return;
     }
 
