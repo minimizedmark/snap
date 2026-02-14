@@ -49,7 +49,7 @@ export async function sendMagicLinkEmail(
               <tr>
                 <td style="background-color: #000000; padding: 40px 20px; text-align: center;">
                   <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">Snap Calls</h1>
-                  <p style="color: #0EA5E9; margin: 10px 0 0 0; font-size: 16px; font-weight: 500;">It's a snap</p>
+                  <p style="color: #FF6B35; margin: 10px 0 0 0; font-size: 16px; font-weight: 500;">Never miss a job</p>
                 </td>
               </tr>
               <tr>
@@ -59,7 +59,7 @@ export async function sendMagicLinkEmail(
                     Click the button below to sign in to your Snap Calls account. This link will expire in 15 minutes.
                   </p>
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="${magicLink}" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    <a href="${magicLink}" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                       Sign In
                     </a>
                   </div>
@@ -71,7 +71,7 @@ export async function sendMagicLinkEmail(
               <tr>
                 <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                   <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                    © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                    © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                   </p>
                 </td>
               </tr>
@@ -148,7 +148,7 @@ export async function sendLowBalanceAlertEmail(
                     </p>
                   `}
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="${process.env.APP_URL}/wallet" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    <a href="${process.env.APP_URL}/wallet" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                       Add Funds Now
                     </a>
                   </div>
@@ -160,7 +160,7 @@ export async function sendLowBalanceAlertEmail(
               <tr>
                 <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                   <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                    © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                    © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                   </p>
                 </td>
               </tr>
@@ -222,12 +222,12 @@ export async function sendMissedCallNotificationEmail(
                   <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px;">
                     <strong>Response Type:</strong> ${messageType}
                   </p>
-                  <div style="background-color: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                    <p style="color: #0C4A6E; margin: 0; font-weight: 600;">Auto-response sent!</p>
-                    <p style="color: #0C4A6E; margin: 8px 0 0 0; font-size: 14px;">We automatically sent your ${messageType} message to this caller.</p>
+                  <div style="background-color: #FFF4ED; border-left: 4px solid #FF6B35; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                    <p style="color: #CC4A00; margin: 0; font-weight: 600;">Auto-response sent!</p>
+                    <p style="color: #CC4A00; margin: 8px 0 0 0; font-size: 14px;">We automatically sent your ${messageType} message to this caller.</p>
                   </div>
                   <div style="text-align: center; margin: 30px 0;">
-                    <a href="${process.env.APP_URL}/calls" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    <a href="${process.env.APP_URL}/calls" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                       View Call Details
                     </a>
                   </div>
@@ -236,7 +236,7 @@ export async function sendMissedCallNotificationEmail(
               <tr>
                 <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                   <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                    © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                    © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                   </p>
                 </td>
               </tr>
@@ -317,7 +317,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                   <strong>Want a full-service phone line?</strong> Upgrade to a SnapLine for only $20/month and use your number however you like.
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/upgrade-snapline" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                  <a href="${process.env.APP_URL}/upgrade-snapline" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     Upgrade to SnapLine — $20/mo
                   </a>
                 </div>
@@ -326,7 +326,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
             <tr>
               <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                  © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                 </p>
               </td>
             </tr>
@@ -358,9 +358,9 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                 <p style="color: #6b7280; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
                   We're happy that you find SnapCalls so useful! Instead of revoking your number, we've <strong>suspended</strong> it until you upgrade.
                 </p>
-                <div style="background-color: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px; margin: 20px 0; border-radius: 4px;">
-                  <p style="color: #0C4A6E; margin: 0; font-weight: 600;">Upgrade to a SnapLine for only $20/month</p>
-                  <p style="color: #0C4A6E; margin: 8px 0 0 0; font-size: 14px;">A SnapLine is a full-service phone line — use your number however you like with no restrictions. Your existing wallet balance ($${d.walletBalance}) will still be used for missed call responses.</p>
+                <div style="background-color: #FFF4ED; border-left: 4px solid #FF6B35; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                  <p style="color: #CC4A00; margin: 0; font-weight: 600;">Upgrade to a SnapLine for only $20/month</p>
+                  <p style="color: #CC4A00; margin: 8px 0 0 0; font-size: 14px;">A SnapLine is a full-service phone line — use your number however you like with no restrictions. Your existing wallet balance ($${d.walletBalance}) will still be used for missed call responses.</p>
                 </div>
                 ${d.phoneNumber && d.phoneNumber !== 'N/A' ? `
                 <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 16px; margin: 20px 0; border-radius: 4px; text-align: center;">
@@ -369,19 +369,19 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                 </div>
                 ` : ''}
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${d.snaplineUpgradeUrl}" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                  <a href="${d.snaplineUpgradeUrl}" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     Upgrade to SnapLine — Only $20/mo
                   </a>
                 </div>
                 <p style="color: #6b7280; margin: 20px 0 0 0; font-size: 14px; line-height: 1.5; text-align: center;">
-                  Thank you for your continued support — we truly appreciate it. 💙
+                  Thank you for your continued support — we truly appreciate it. 🧡
                 </p>
               </td>
             </tr>
             <tr>
               <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                  © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                 </p>
               </td>
             </tr>
@@ -415,7 +415,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                   <p style="color: #991B1B; margin: 8px 0 0 0; font-size: 14px;">Please add a payment method to upgrade to a SnapLine ($20/mo) and reactivate your number.</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     Add Payment Method
                   </a>
                 </div>
@@ -424,7 +424,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
             <tr>
               <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                  © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                 </p>
               </td>
             </tr>
@@ -457,7 +457,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                   <p style="color: #065F46; margin: 0; font-weight: 600;">New Balance: $${d.newBalance}</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/wallet" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                  <a href="${process.env.APP_URL}/wallet" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     View Wallet
                   </a>
                 </div>
@@ -466,7 +466,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
             <tr>
               <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                  © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                 </p>
               </td>
             </tr>
@@ -500,7 +500,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                   <p style="color: #991B1B; margin: 8px 0 0 0; font-size: 14px;">Please update your payment method in your dashboard to restore service.</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     Update Payment Method
                   </a>
                 </div>
@@ -509,7 +509,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
             <tr>
               <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                  © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                 </p>
               </td>
             </tr>
@@ -528,7 +528,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f9fafb; padding: 20px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <tr>
-              <td style="background-color: #0EA5E9; padding: 40px 20px; text-align: center;">
+              <td style="background-color: #FF6B35; padding: 40px 20px; text-align: center;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;">🎉 Welcome to SnapLine!</h1>
               </td>
             </tr>
@@ -548,10 +548,10 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
                   <li>$20/month subscription + $1 per missed call response</li>
                 </ul>
                 <p style="color: #6b7280; margin: 20px 0 0 0; font-size: 14px; line-height: 1.5; text-align: center;">
-                  Thank you for your continued support — we truly appreciate it. 💙
+                  Thank you for your continued support — we truly appreciate it. 🧡
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #0EA5E9; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                  <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background-color: #FF6B35; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     Go to Dashboard
                   </a>
                 </div>
@@ -560,7 +560,7 @@ function getEmailTemplate(template: string, data: Record<string, any>): string {
             <tr>
               <td style="background-color: #f9fafb; padding: 20px; text-align: center;">
                 <p style="color: #6b7280; margin: 0; font-size: 14px;">
-                  © ${new Date().getFullYear()} Snap Calls. Never miss another customer.
+                  © ${new Date().getFullYear()} Snap Calls. Never miss a job.
                 </p>
               </td>
             </tr>
