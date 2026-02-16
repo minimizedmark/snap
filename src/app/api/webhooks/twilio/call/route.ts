@@ -78,6 +78,7 @@ async function processCallAsync(req: NextRequest) {
             userFeatures: true,
             notificationSettings: true,
             wallet: true,
+            companyProfile: true,
           },
         },
       },
@@ -177,6 +178,7 @@ async function processCallAsync(req: NextRequest) {
 
         // Generate AI-powered response using Qwen3-4B
         if (voicemailTranscription && !voicemailTranscription.startsWith('[')) {
+          const companyProfile = user.companyProfile;
           const aiResponse = await generateCallResponse({
             voicemailTranscription,
             businessName: user.businessSettings.businessName,
@@ -186,6 +188,10 @@ async function processCallAsync(req: NextRequest) {
             callerName,
             aiInstructions: (user.messageTemplates as any).aiInstructions,
             defaultTemplate: messageSent,
+            businessType: companyProfile?.businessType || undefined,
+            primaryServices: companyProfile?.primaryServices || undefined,
+            emergencyProtocol: companyProfile?.emergencyProtocol || undefined,
+            responseTimeframe: companyProfile?.responseTimeframe || undefined,
           });
           messageSent = aiResponse; // Replace template with AI response
           console.log('🤖 AI contextual response generated for call:', twilioCallSid);

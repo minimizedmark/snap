@@ -39,10 +39,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get user's phone number for file naming
+    const twilioConfig = await prisma.twilioConfig.findUnique({
+      where: { userId: session.user.id },
+    });
+
+    const phoneNumber = twilioConfig?.phoneNumber?.replace(/\+/g, '') || 'unknown';
     const ext = file.type.split('/')[1] || 'webm';
-    const fileName = `greetings/${session.user.id}/greeting-${Date.now()}.${ext}`;
+    const fileName = `greetings/${session.user.id}_${phoneNumber}.${ext}`;
 
     const buffer = await file.arrayBuffer();
+
+    // Delete any existing greeting files for this user
+    const { data: existingFiles } = await supabase.storage
+      .from('audio')
+      .list('greetings', {
+        search: `${session.user.id}_${phoneNumber}`,
+      });
+
+    if (existingFiles && existingFiles.length > 0) {
+      const filesToRemove = existingFiles.map((f) => `greetings/${f.name}`);
+      await supabase.storage.from('audio').remove(filesToRemove);
+    }
 
     const { error: uploadError } = await supabase.storage
       .from('audio')
@@ -62,9 +80,13 @@ export async function POST(req: NextRequest) {
 
     const publicUrl = urlData.publicUrl;
 
-    await prisma.companyProfile.update({
+    await prisma.companyProfile.upsert({
       where: { userId: session.user.id },
-      data: { greetingAudioUrl: publicUrl },
+      create: {
+        userId: session.user.id,
+        greetingAudioUrl: publicUrl,
+      },
+      update: { greetingAudioUrl: publicUrl },
     });
 
     return NextResponse.json({ url: publicUrl });

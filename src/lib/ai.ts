@@ -286,6 +286,14 @@ export interface AiCallResponseParams {
   aiInstructions?: string | null;
   /** The default template (fallback context) */
   defaultTemplate: string;
+  /** Business type from company profile */
+  businessType?: string;
+  /** Primary services offered */
+  primaryServices?: string[];
+  /** Emergency protocol */
+  emergencyProtocol?: string;
+  /** Response timeframe */
+  responseTimeframe?: string;
 }
 
 /**
@@ -307,7 +315,18 @@ export async function generateCallResponse(params: AiCallResponseParams): Promis
     callerName,
     aiInstructions,
     defaultTemplate,
+    businessType,
+    primaryServices,
+    emergencyProtocol,
+    responseTimeframe,
   } = params;
+
+  const serviceContext = primaryServices?.length
+    ? `- Services offered: ${primaryServices.join(', ')}`
+    : '';
+  const typeContext = businessType ? `- Business type: ${businessType}` : '';
+  const emergencyContext = emergencyProtocol ? `- Emergency protocol: ${emergencyProtocol}` : '';
+  const timeframeContext = responseTimeframe ? `- Response timeframe: ${responseTimeframe}` : '';
 
   const prompt = `Generate a personalized SMS response for a missed call at ${businessName}.
 
@@ -318,6 +337,10 @@ Context:
 - Currently ${isBusinessHours ? 'during' : 'outside'} business hours
 ${isVip && callerName ? `- VIP caller: ${callerName}` : '- Regular caller'}
 ${callerName ? `- Caller name: ${callerName}` : ''}
+${typeContext}
+${serviceContext}
+${emergencyContext}
+${timeframeContext}
 
 Default template for reference: "${defaultTemplate}"
 
