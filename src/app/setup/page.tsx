@@ -20,24 +20,100 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const BUSINESS_TYPES = [
-  'HVAC',
-  'Plumbing',
-  'Electrical',
-  'Roofing',
-  'General Contractor',
-  'Landscaping',
-  'Pest Control',
-  'Cleaning Service',
-  'Auto Repair',
-  'Medical Practice',
-  'Dental Practice',
-  'Law Firm',
-  'Real Estate',
-  'Restaurant',
-  'Salon/Spa',
-  'Other',
-];
+// ─── Industry Data ───────────────────────────────────────────────────────────
+
+const INDUSTRY_DATA: Record<string, {
+  label: string;
+  services: string[];
+  commonCalls: string[];
+  extraQuestion?: { label: string; options: string[] };
+}> = {
+  'HVAC/Plumbing': {
+    label: 'HVAC / Plumbing',
+    services: ['Heating repair', 'AC service', 'Water heater', 'Drain cleaning', 'Emergency plumbing', 'Ductwork', 'Gas lines'],
+    commonCalls: ['No heat/cooling', 'Strange noises', 'Water leaks', 'Clogged drains', 'High energy bills', 'Gas smell (emergency)', 'Schedule maintenance'],
+    extraQuestion: { label: 'Peak Seasons', options: ['Summer (AC)', 'Winter (heating)', 'Spring maintenance', 'Year-round'] },
+  },
+  'Salon/Spa': {
+    label: 'Salon / Spa',
+    services: ['Haircuts', 'Color/highlights', 'Facials', 'Massage', 'Nails', 'Waxing', 'Eyebrows'],
+    commonCalls: ['Book appointment', 'Check availability', 'Reschedule', 'Color correction', 'Last-minute openings', 'Pricing questions', 'Gift cards'],
+    extraQuestion: { label: 'Appointment Types', options: ['Walk-ins welcome', 'Appointment only', 'Some walk-in services'] },
+  },
+  'Auto Service': {
+    label: 'Auto Service',
+    services: ['Oil change', 'Brake repair', 'Engine diagnostics', 'Tires', 'State inspection', 'Towing', 'Transmission'],
+    commonCalls: ["Won't start", 'Breakdown/towing', 'Flat tire', 'Accident', 'Strange noises', 'Overheating', 'Check engine light'],
+    extraQuestion: { label: 'Service Time', options: ['While you wait', 'Same day', 'Drop off overnight', 'By appointment'] },
+  },
+  'Medical/Dental': {
+    label: 'Medical / Dental',
+    services: ['General checkups', 'Cleanings', 'X-rays', 'Fillings/crowns', 'Urgent care', 'Specialist referrals', 'Lab work'],
+    commonCalls: ['Schedule appointment', 'Prescription refill', 'Test results', 'Insurance questions', 'Cancel/reschedule', 'Urgent symptoms', 'Billing questions'],
+    extraQuestion: { label: 'Patient Types', options: ['New patients welcome', 'Referral only', 'Walk-ins accepted', 'Telehealth available'] },
+  },
+  'Legal': {
+    label: 'Legal / Law Firm',
+    services: ['Personal injury', 'Family law', 'Criminal defense', 'Business law', 'Estate planning', 'Real estate', 'Immigration'],
+    commonCalls: ['Free consultation', 'Case status update', 'Document questions', 'Court date info', 'New case inquiry', 'Billing questions', 'Urgent legal matter'],
+    extraQuestion: { label: 'Consultation Type', options: ['Free initial consultation', 'Paid consultation', 'Phone screening first', 'In-person only'] },
+  },
+  'Restaurant': {
+    label: 'Restaurant',
+    services: ['Dine-in', 'Takeout', 'Delivery', 'Catering', 'Private events', 'Bar/drinks', 'Bakery/desserts'],
+    commonCalls: ['Make reservation', 'Check hours', 'Menu questions', 'Large party booking', 'Catering inquiry', 'Dietary accommodations', 'Gift cards'],
+    extraQuestion: { label: 'Reservation Style', options: ['Reservations required', 'Walk-ins only', 'Both reservations & walk-ins', 'Online booking available'] },
+  },
+  'General Contractor': {
+    label: 'General Contractor',
+    services: ['Kitchen remodel', 'Bathroom remodel', 'Room additions', 'Roofing', 'Siding', 'Windows/doors', 'Decks/patios'],
+    commonCalls: ['Get an estimate', 'Project timeline', 'Schedule consultation', 'Insurance claim work', 'Permit questions', 'Material selection', 'Warranty issue'],
+    extraQuestion: { label: 'Project Size', options: ['Small repairs', 'Medium remodels', 'Large renovations', 'New construction', 'Commercial projects'] },
+  },
+  'Electrical': {
+    label: 'Electrical',
+    services: ['Wiring/rewiring', 'Panel upgrades', 'Outlet installation', 'Lighting', 'Generator install', 'EV charger install', 'Electrical inspections'],
+    commonCalls: ['No power', 'Flickering lights', 'Tripping breakers', 'New construction wiring', 'Code violations', 'Emergency electrical', 'Estimate request'],
+    extraQuestion: { label: 'Service Type', options: ['Residential only', 'Commercial only', 'Both residential & commercial', 'Emergency 24/7'] },
+  },
+  'Landscaping': {
+    label: 'Landscaping',
+    services: ['Lawn mowing', 'Tree trimming', 'Landscape design', 'Irrigation', 'Hardscaping', 'Snow removal', 'Garden maintenance'],
+    commonCalls: ['Get a quote', 'Schedule service', 'Weekly maintenance', 'One-time cleanup', 'Tree removal', 'Sprinkler repair', 'Seasonal cleanup'],
+    extraQuestion: { label: 'Service Schedule', options: ['Weekly maintenance', 'Bi-weekly', 'Monthly', 'One-time projects only', 'Seasonal contracts'] },
+  },
+  'Pest Control': {
+    label: 'Pest Control',
+    services: ['Ant treatment', 'Termite inspection', 'Rodent control', 'Bed bug treatment', 'Mosquito control', 'Wildlife removal', 'Preventive treatment'],
+    commonCalls: ['Bug/pest sighting', 'Schedule inspection', 'Emergency service', 'Recurring plan', 'Pricing questions', 'Termite damage', 'Re-treatment needed'],
+    extraQuestion: { label: 'Treatment Type', options: ['One-time treatment', 'Monthly plan', 'Quarterly plan', 'Annual plan'] },
+  },
+  'Cleaning Service': {
+    label: 'Cleaning Service',
+    services: ['Regular house cleaning', 'Deep cleaning', 'Move-in/move-out', 'Office cleaning', 'Carpet cleaning', 'Window washing', 'Post-construction'],
+    commonCalls: ['Get a quote', 'Book cleaning', 'Reschedule', 'Add extra service', 'Recurring schedule', 'Complaint/redo', 'Last-minute booking'],
+    extraQuestion: { label: 'Service Frequency', options: ['One-time', 'Weekly', 'Bi-weekly', 'Monthly', 'Custom schedule'] },
+  },
+  'Real Estate': {
+    label: 'Real Estate',
+    services: ['Buying assistance', 'Selling/listing', 'Rental management', 'Property valuation', 'Investment properties', 'Commercial real estate', 'Relocation help'],
+    commonCalls: ['Property inquiry', 'Schedule showing', 'List my property', 'Market value question', 'Offer status', 'Open house info', 'Agent availability'],
+    extraQuestion: { label: 'Specialization', options: ['Residential', 'Commercial', 'Both', 'Luxury properties', 'First-time buyers'] },
+  },
+  'Roofing': {
+    label: 'Roofing',
+    services: ['Roof repair', 'Roof replacement', 'Leak repair', 'Gutter install', 'Storm damage', 'Roof inspection', 'Chimney repair'],
+    commonCalls: ['Roof leaking', 'Storm damage', 'Get an estimate', 'Insurance claim', 'Gutter cleaning', 'Annual inspection', 'Emergency repair'],
+    extraQuestion: { label: 'Roof Types', options: ['Shingle', 'Metal', 'Flat/commercial', 'Tile', 'All types'] },
+  },
+  'Other': {
+    label: 'Other',
+    services: [],
+    commonCalls: [],
+  },
+};
+
+const BUSINESS_TYPES = Object.keys(INDUSTRY_DATA);
 
 const RESPONSE_TIMEFRAMES = [
   'Within 15 minutes',
@@ -84,6 +160,33 @@ const KEY_MESSAGE_OPTIONS = [
   'Competitive Pricing',
 ];
 
+const QUOTE_HANDLING_OPTIONS = [
+  'Free estimates over the phone',
+  'Free on-site estimates',
+  'Estimates require a scheduled visit',
+  'We provide price ranges by phone',
+  'Quote after inspection only',
+  'Flat rate pricing available',
+];
+
+const EMERGENCY_PROTOCOL_OPTIONS = [
+  'Dispatch technician within 1 hour',
+  'Emergency rates apply after hours',
+  'Call forwarded to on-call staff',
+  'Emergency voicemail checked every 30 min',
+  'We do not handle emergencies',
+  'Emergency line separate from main',
+];
+
+const AFTER_HOURS_OPTIONS = [
+  'Calls returned first thing next business day',
+  'Voicemail with next-day callback',
+  'Text message auto-reply sent',
+  'After-hours answering service',
+  'Emergency calls still answered',
+  'Online booking available 24/7',
+];
+
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 interface StaffMember {
@@ -99,6 +202,134 @@ interface DayHours {
 
 type BusinessHoursMap = Record<string, DayHours>;
 
+// ─── Checkbox Group Component ────────────────────────────────────────────────
+
+function CheckboxGroup({
+  label,
+  options,
+  selected,
+  onChange,
+  showOther = true,
+  columns = 2,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  showOther?: boolean;
+  columns?: number;
+}) {
+  const [otherValue, setOtherValue] = useState('');
+  const predefined = new Set(options);
+
+  // Extract any "other" values that aren't in the predefined list
+  useEffect(() => {
+    const customValues = selected.filter(s => !predefined.has(s));
+    if (customValues.length > 0) {
+      setOtherValue(customValues.join(', '));
+    }
+  }, []);
+
+  const toggle = (option: string) => {
+    onChange(
+      selected.includes(option)
+        ? selected.filter((s) => s !== option)
+        : [...selected, option]
+    );
+  };
+
+  const handleOtherChange = (value: string) => {
+    setOtherValue(value);
+    const predefinedSelected = selected.filter(s => predefined.has(s));
+    const otherItems = value.split(',').map(s => s.trim()).filter(Boolean);
+    onChange([...predefinedSelected, ...otherItems]);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-bold text-charcoal-text mb-3 uppercase tracking-wider">{label}</label>
+      <div className={`grid grid-cols-1 ${columns === 2 ? 'sm:grid-cols-2' : ''} gap-2`}>
+        {options.map((opt) => (
+          <label
+            key={opt}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-lg border-2 cursor-pointer snap-transition ${
+              selected.includes(opt)
+                ? 'border-safety-orange bg-safety-orange/10'
+                : 'border-gray-200 hover:border-safety-orange/50'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={selected.includes(opt)}
+              onChange={() => toggle(opt)}
+              className="rounded border-gray-300 text-safety-orange focus:ring-safety-orange w-4 h-4 flex-shrink-0"
+            />
+            <span className={`text-sm font-medium ${selected.includes(opt) ? 'text-safety-orange' : 'text-charcoal-text'}`}>
+              {opt}
+            </span>
+          </label>
+        ))}
+      </div>
+      {showOther && (
+        <div className="mt-3">
+          <input
+            type="text"
+            value={otherValue}
+            onChange={(e) => handleOtherChange(e.target.value)}
+            className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
+            placeholder="Anything else? (separate with commas)"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Radio Group Component ───────────────────────────────────────────────────
+
+function RadioGroup({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  selected: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-charcoal-text mb-3 uppercase tracking-wider">{label}</label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {options.map((opt) => (
+          <label
+            key={opt}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-lg border-2 cursor-pointer snap-transition ${
+              selected === opt
+                ? 'border-safety-orange bg-safety-orange/10'
+                : 'border-gray-200 hover:border-safety-orange/50'
+            }`}
+          >
+            <input
+              type="radio"
+              name="business-type"
+              checked={selected === opt}
+              onChange={() => onChange(opt)}
+              className="border-gray-300 text-safety-orange focus:ring-safety-orange w-4 h-4 flex-shrink-0"
+            />
+            <span className={`text-sm font-medium ${selected === opt ? 'text-safety-orange' : 'text-charcoal-text'}`}>
+              {INDUSTRY_DATA[opt]?.label || opt}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Setup Page ─────────────────────────────────────────────────────────
+
 export default function SetupPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -108,8 +339,9 @@ export default function SetupPage() {
 
   // Step 1
   const [businessType, setBusinessType] = useState('');
-  const [primaryServices, setPrimaryServices] = useState<string[]>(['', '', '']);
+  const [primaryServices, setPrimaryServices] = useState<string[]>([]);
   const [serviceAreas, setServiceAreas] = useState<string[]>(['']);
+  const [extraAnswers, setExtraAnswers] = useState<string[]>([]);
 
   // Step 2
   const [businessHours, setBusinessHours] = useState<BusinessHoursMap>(() => {
@@ -136,10 +368,10 @@ export default function SetupPage() {
   const [keyMessages, setKeyMessages] = useState<string[]>([]);
 
   // Step 5
-  const [commonCallReasons, setCommonCallReasons] = useState<string[]>(['', '', '']);
-  const [quoteHandling, setQuoteHandling] = useState('');
-  const [emergencyProtocol, setEmergencyProtocol] = useState('');
-  const [afterHoursProtocol, setAfterHoursProtocol] = useState('');
+  const [commonCallReasons, setCommonCallReasons] = useState<string[]>([]);
+  const [quoteHandling, setQuoteHandling] = useState<string[]>([]);
+  const [emergencyProtocol, setEmergencyProtocol] = useState<string[]>([]);
+  const [afterHoursProtocol, setAfterHoursProtocol] = useState<string[]>([]);
 
   // Step 6
   const [greetingScript, setGreetingScript] = useState('');
@@ -154,6 +386,9 @@ export default function SetupPage() {
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Get current industry data
+  const industryInfo = INDUSTRY_DATA[businessType] || null;
+
   // Load existing profile on mount
   useEffect(() => {
     fetch('/api/onboarding/company-profile')
@@ -162,7 +397,7 @@ export default function SetupPage() {
         if (data.profile) {
           const p = data.profile;
           if (p.businessType) setBusinessType(p.businessType);
-          if (p.primaryServices?.length) setPrimaryServices(p.primaryServices.length >= 3 ? p.primaryServices : [...p.primaryServices, ...Array(3 - p.primaryServices.length).fill('')]);
+          if (p.primaryServices?.length) setPrimaryServices(p.primaryServices);
           if (p.serviceAreas?.length) setServiceAreas(p.serviceAreas);
           if (p.businessHours) setBusinessHours(p.businessHours as BusinessHoursMap);
           if (p.emergencyServices) setEmergencyServices(p.emergencyServices);
@@ -172,10 +407,17 @@ export default function SetupPage() {
           if (p.callRoutingRules) setCallRoutingRules(p.callRoutingRules as typeof callRoutingRules);
           if (p.businessPersonality?.length) setBusinessPersonality(p.businessPersonality);
           if (p.keyMessages?.length) setKeyMessages(p.keyMessages);
-          if (p.commonCallReasons?.length) setCommonCallReasons(p.commonCallReasons.length >= 3 ? p.commonCallReasons : [...p.commonCallReasons, ...Array(3 - p.commonCallReasons.length).fill('')]);
-          if (p.quoteHandling) setQuoteHandling(p.quoteHandling);
-          if (p.emergencyProtocol) setEmergencyProtocol(p.emergencyProtocol);
-          if (p.afterHoursProtocol) setAfterHoursProtocol(p.afterHoursProtocol);
+          if (p.commonCallReasons?.length) setCommonCallReasons(p.commonCallReasons);
+          // Handle quote/emergency/afterhours - could be string (old) or array (new)
+          if (p.quoteHandling) {
+            setQuoteHandling(Array.isArray(p.quoteHandling) ? p.quoteHandling : [p.quoteHandling]);
+          }
+          if (p.emergencyProtocol) {
+            setEmergencyProtocol(Array.isArray(p.emergencyProtocol) ? p.emergencyProtocol : [p.emergencyProtocol]);
+          }
+          if (p.afterHoursProtocol) {
+            setAfterHoursProtocol(Array.isArray(p.afterHoursProtocol) ? p.afterHoursProtocol : [p.afterHoursProtocol]);
+          }
           if (p.greetingScript) setGreetingScript(p.greetingScript);
           if (p.greetingAudioUrl) setUploadedUrl(p.greetingAudioUrl);
           if (p.currentStep && p.currentStep > 1) setStep(p.currentStep);
@@ -191,6 +433,14 @@ export default function SetupPage() {
       setMediaSupported(false);
     }
   }, []);
+
+  // Reset services/calls when business type changes
+  const handleBusinessTypeChange = (type: string) => {
+    setBusinessType(type);
+    setPrimaryServices([]);
+    setCommonCallReasons([]);
+    setExtraAnswers([]);
+  };
 
   const saveStep = async (stepNum: number, data: Record<string, unknown>) => {
     setLoading(true);
@@ -229,11 +479,16 @@ export default function SetupPage() {
 
   const getCurrentStepData = (): Record<string, unknown> | null => {
     switch (step) {
-      case 1: return { businessType, primaryServices: primaryServices.filter(Boolean), serviceAreas: serviceAreas.filter(Boolean) };
+      case 1: return { businessType, primaryServices, serviceAreas: serviceAreas.filter(Boolean) };
       case 2: return { businessHours, emergencyServices, emergencyDefinition, responseTimeframe };
       case 3: return { staffMembers: staffMembers.filter(s => s.name), callRoutingRules };
       case 4: return { businessPersonality, keyMessages };
-      case 5: return { commonCallReasons: commonCallReasons.filter(Boolean), quoteHandling, emergencyProtocol, afterHoursProtocol };
+      case 5: return {
+        commonCallReasons,
+        quoteHandling: quoteHandling.join('; '),
+        emergencyProtocol: emergencyProtocol.join('; '),
+        afterHoursProtocol: afterHoursProtocol.join('; '),
+      };
       case 6: return { greetingScript, greetingAudioUrl: uploadedUrl };
       default: return null;
     }
@@ -331,9 +586,7 @@ export default function SetupPage() {
     setLoading(true);
     setError(null);
     try {
-      // Save step 6 data
       await saveStep(6, { greetingScript, greetingAudioUrl: uploadedUrl });
-      // Mark as complete
       const res = await fetch('/api/onboarding/company-profile', { method: 'PATCH' });
       if (!res.ok) throw new Error('Failed to complete setup');
       router.push('/dashboard');
@@ -359,7 +612,6 @@ export default function SetupPage() {
     setList(updated);
   };
 
-  const stepIcons = [Building2, Clock, Users, MessageSquare, Phone, Mic];
   const stepLabels = ['Business', 'Operations', 'Staff', 'Brand', 'Scenarios', 'Greeting'];
 
   if (initialLoading) {
@@ -428,54 +680,64 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* Step 1: Business Basics */}
+            {/* ─── Step 1: Business Basics ─── */}
             {step === 1 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
                   <Building2 className="w-6 h-6 text-safety-orange" />
-                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Business Basics</h2>
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">What&apos;s Your Business?</h2>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Business Type</label>
-                  <select
-                    value={businessType}
-                    onChange={(e) => setBusinessType(e.target.value)}
-                    className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                  >
-                    <option value="">Select your business type...</option>
-                    {BUSINESS_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                <RadioGroup
+                  label="Select Your Industry"
+                  options={BUSINESS_TYPES}
+                  selected={businessType}
+                  onChange={handleBusinessTypeChange}
+                />
+
+                {/* Industry-specific services */}
+                {industryInfo && industryInfo.services.length > 0 && (
+                  <CheckboxGroup
+                    label="Services You Offer"
+                    options={industryInfo.services}
+                    selected={primaryServices}
+                    onChange={setPrimaryServices}
+                  />
+                )}
+
+                {/* Other business type - free text services */}
+                {businessType === 'Other' && (
+                  <div>
+                    <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Your Services</label>
+                    {(primaryServices.length === 0 ? ['', '', ''] : primaryServices).map((service, idx) => (
+                      <div key={idx} className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="text"
+                          value={service}
+                          onChange={(e) => {
+                            const list = primaryServices.length === 0 ? ['', '', ''] : [...primaryServices];
+                            list[idx] = e.target.value;
+                            setPrimaryServices(list);
+                          }}
+                          className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
+                          placeholder={`Service ${idx + 1}`}
+                        />
+                      </div>
                     ))}
-                  </select>
-                </div>
+                  </div>
+                )}
 
-                <div>
-                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Primary Services (3-5)</label>
-                  {primaryServices.map((service, idx) => (
-                    <div key={idx} className="flex items-center space-x-2 mb-2">
-                      <input
-                        type="text"
-                        value={service}
-                        onChange={(e) => updateList(primaryServices, setPrimaryServices, idx, e.target.value)}
-                        className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                        placeholder={`Service ${idx + 1}`}
-                      />
-                      {primaryServices.length > 3 && (
-                        <button onClick={() => removeFromList(primaryServices, setPrimaryServices, idx)} className="text-gray-400 hover:text-red-500 snap-transition">
-                          <X className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {primaryServices.length < 5 && (
-                    <button onClick={() => addToList(primaryServices, setPrimaryServices, 5)} className="flex items-center space-x-1 text-sm text-safety-orange hover:text-[#E65F00] snap-transition font-bold">
-                      <Plus className="w-4 h-4" />
-                      <span>Add Service</span>
-                    </button>
-                  )}
-                </div>
+                {/* Extra industry question */}
+                {industryInfo?.extraQuestion && (
+                  <CheckboxGroup
+                    label={industryInfo.extraQuestion.label}
+                    options={industryInfo.extraQuestion.options}
+                    selected={extraAnswers}
+                    onChange={setExtraAnswers}
+                  />
+                )}
 
+                {/* Service areas - keep as text inputs */}
                 <div>
                   <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Service Areas</label>
                   {serviceAreas.map((area, idx) => (
@@ -501,8 +763,8 @@ export default function SetupPage() {
                 </div>
 
                 <button
-                  onClick={() => handleNext(1, { businessType, primaryServices: primaryServices.filter(Boolean), serviceAreas: serviceAreas.filter(Boolean) })}
-                  disabled={!businessType || primaryServices.filter(Boolean).length < 1 || loading}
+                  onClick={() => handleNext(1, { businessType, primaryServices, serviceAreas: serviceAreas.filter(Boolean) })}
+                  disabled={!businessType || primaryServices.length < 1 || loading}
                   className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
                 >
                   <span>{loading ? 'Saving...' : 'Continue'}</span>
@@ -511,7 +773,7 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* Step 2: Operations */}
+            {/* ─── Step 2: Operations ─── */}
             {step === 2 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
@@ -604,7 +866,7 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* Step 3: Staff & Roles */}
+            {/* ─── Step 3: Staff & Roles ─── */}
             {step === 3 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
@@ -694,7 +956,7 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* Step 4: Brand Voice */}
+            {/* ─── Step 4: Brand Voice ─── */}
             {step === 4 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
@@ -764,7 +1026,7 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* Step 5: Common Scenarios */}
+            {/* ─── Step 5: Common Scenarios ─── */}
             {step === 5 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
@@ -772,70 +1034,69 @@ export default function SetupPage() {
                   <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Common Scenarios</h2>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Common Call Reasons (3-5)</label>
-                  {commonCallReasons.map((reason, idx) => (
-                    <div key={idx} className="flex items-center space-x-2 mb-2">
-                      <input
-                        type="text"
-                        value={reason}
-                        onChange={(e) => updateList(commonCallReasons, setCommonCallReasons, idx, e.target.value)}
-                        className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                        placeholder={`Reason ${idx + 1} (e.g., "Schedule a service call")`}
-                      />
-                      {commonCallReasons.length > 3 && (
-                        <button onClick={() => removeFromList(commonCallReasons, setCommonCallReasons, idx)} className="text-gray-400 hover:text-red-500 snap-transition">
-                          <X className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {commonCallReasons.length < 5 && (
-                    <button onClick={() => addToList(commonCallReasons, setCommonCallReasons, 5)} className="flex items-center space-x-1 text-sm text-safety-orange hover:text-[#E65F00] snap-transition font-bold">
-                      <Plus className="w-4 h-4" />
-                      <span>Add Reason</span>
-                    </button>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">How do you handle quote requests?</label>
-                  <textarea
-                    value={quoteHandling}
-                    onChange={(e) => setQuoteHandling(e.target.value)}
-                    className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                    rows={3}
-                    placeholder="e.g., We offer free estimates within 24 hours. For larger jobs, we schedule an on-site visit..."
+                {/* Industry-specific common call reasons */}
+                {industryInfo && industryInfo.commonCalls.length > 0 ? (
+                  <CheckboxGroup
+                    label="Why Do Customers Call You?"
+                    options={industryInfo.commonCalls}
+                    selected={commonCallReasons}
+                    onChange={setCommonCallReasons}
                   />
-                </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Common Call Reasons</label>
+                    {(commonCallReasons.length === 0 ? ['', '', ''] : commonCallReasons).map((reason, idx) => (
+                      <div key={idx} className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="text"
+                          value={reason}
+                          onChange={(e) => {
+                            const list = commonCallReasons.length === 0 ? ['', '', ''] : [...commonCallReasons];
+                            list[idx] = e.target.value;
+                            setCommonCallReasons(list);
+                          }}
+                          className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
+                          placeholder={`Reason ${idx + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                <div>
-                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Emergency Protocol</label>
-                  <textarea
-                    value={emergencyProtocol}
-                    onChange={(e) => setEmergencyProtocol(e.target.value)}
-                    className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                    rows={3}
-                    placeholder="e.g., For emergencies, we dispatch a technician within 1 hour. Emergency rates apply after hours..."
-                  />
-                </div>
+                <CheckboxGroup
+                  label="How Do You Handle Quote Requests?"
+                  options={QUOTE_HANDLING_OPTIONS}
+                  selected={quoteHandling}
+                  onChange={setQuoteHandling}
+                  showOther={true}
+                />
 
-                <div>
-                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">After-Hours Protocol</label>
-                  <textarea
-                    value={afterHoursProtocol}
-                    onChange={(e) => setAfterHoursProtocol(e.target.value)}
-                    className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                    rows={3}
-                    placeholder="e.g., After hours calls are returned first thing the next business day. For emergencies, call our emergency line..."
-                  />
-                </div>
+                <CheckboxGroup
+                  label="Emergency Protocol"
+                  options={EMERGENCY_PROTOCOL_OPTIONS}
+                  selected={emergencyProtocol}
+                  onChange={setEmergencyProtocol}
+                  showOther={true}
+                />
+
+                <CheckboxGroup
+                  label="After-Hours Protocol"
+                  options={AFTER_HOURS_OPTIONS}
+                  selected={afterHoursProtocol}
+                  onChange={setAfterHoursProtocol}
+                  showOther={true}
+                />
 
                 <div className="flex space-x-4">
                   <button onClick={() => setStep(4)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
                   <button
-                    onClick={() => handleNext(5, { commonCallReasons: commonCallReasons.filter(Boolean), quoteHandling, emergencyProtocol, afterHoursProtocol })}
-                    disabled={commonCallReasons.filter(Boolean).length < 1 || loading}
+                    onClick={() => handleNext(5, {
+                      commonCallReasons,
+                      quoteHandling: quoteHandling.join('; '),
+                      emergencyProtocol: emergencyProtocol.join('; '),
+                      afterHoursProtocol: afterHoursProtocol.join('; '),
+                    })}
+                    disabled={commonCallReasons.length < 1 || loading}
                     className="btn-snap-light flex-1 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
                   >
                     <span>{loading ? 'Saving...' : 'Continue'}</span>
@@ -845,7 +1106,7 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* Step 6: Greeting Script & Recording */}
+            {/* ─── Step 6: Greeting Script & Recording ─── */}
             {step === 6 && (
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
@@ -875,7 +1136,17 @@ export default function SetupPage() {
                 </div>
 
                 <div className="border-2 border-gray-200 rounded-lg p-6">
-                  <h3 className="text-sm font-bold text-charcoal-text mb-4 uppercase tracking-wider">Record Your Greeting (Optional)</h3>
+                  <h3 className="text-sm font-bold text-charcoal-text mb-4 uppercase tracking-wider">Record Your Greeting</h3>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-amber-900 font-medium mb-2">Tips for the best greeting:</p>
+                    <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
+                      <li>Use the generated script above as your guide — read it naturally</li>
+                      <li>Speak clearly and at a steady pace</li>
+                      <li>Record in a quiet room with no background noise</li>
+                      <li>Smile while you talk — it comes through in your voice</li>
+                      <li>Keep it under 20 seconds for the best caller experience</li>
+                    </ul>
+                  </div>
 
                   {!mediaSupported ? (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -883,7 +1154,6 @@ export default function SetupPage() {
                     </div>
                   ) : (
                     <>
-                      {/* Recording controls */}
                       <div className="flex items-center space-x-4 mb-4">
                         {!isRecording && !audioBlob && (
                           <button
@@ -925,7 +1195,6 @@ export default function SetupPage() {
                         )}
                       </div>
 
-                      {/* Timer */}
                       {(isRecording || audioBlob) && (
                         <div className="mb-4">
                           <div className="flex items-center space-x-2">
@@ -938,29 +1207,34 @@ export default function SetupPage() {
                         </div>
                       )}
 
-                      {/* Playback */}
                       {audioUrl && (
                         <div className="mt-4">
                           <audio controls src={audioUrl} className="w-full" />
                         </div>
                       )}
 
-                      {/* Upload status */}
                       {uploadedUrl && (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 flex items-center space-x-2">
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                          <span className="text-sm text-green-800 font-bold">Recording saved successfully!</span>
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                          <span className="text-sm text-green-800 font-bold flex-1">Recording saved successfully!</span>
+                          <button onClick={() => { reRecord(); setUploadedUrl(null); }} className="text-sm text-safety-orange hover:text-[#E65F00] font-bold snap-transition">
+                            Change Recording
+                          </button>
                         </div>
                       )}
                     </>
                   )}
                 </div>
 
+                {!uploadedUrl && (
+                  <p className="text-sm text-safety-orange font-bold">Please record and save your greeting before completing setup.</p>
+                )}
+
                 <div className="flex space-x-4">
                   <button onClick={() => setStep(5)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
                   <button
                     onClick={handleComplete}
-                    disabled={loading}
+                    disabled={loading || !uploadedUrl}
                     className="btn-snap-light flex-1 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
                   >
                     <CheckCircle className="w-5 h-5" />
