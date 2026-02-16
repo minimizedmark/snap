@@ -42,6 +42,7 @@ model User {
   callLogs                CallLog[]
   assignedPhoneNumbers    PhoneNumberInventory[]
   pendingNumberRequests   PendingNumberRequest[]
+  companyProfile          CompanyProfile?
 
   @@map("users")
   @@schema("public")
@@ -368,6 +369,67 @@ model TemplateLibrary {
 
   @@index([category, templateType])
   @@map("template_library")
+  @@schema("public")
+}
+
+model CompanyProfile {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+
+  // Step 1: Business Basics
+  businessType         String?  @map("business_type")
+  primaryServices      String[] @map("primary_services")
+  serviceAreas         String[] @map("service_areas")
+
+  // Step 2: Operations
+  businessHours        Json?    @map("business_hours") // Per-day open/close/closed
+  emergencyServices    Boolean  @default(false) @map("emergency_services")
+  emergencyDefinition  String?  @map("emergency_definition")
+  responseTimeframe    String?  @map("response_timeframe")
+
+  // Step 3: Staff & Roles
+  staffMembers         Json?    @map("staff_members") // Array of {name, role}
+  callRoutingRules     Json?    @map("call_routing_rules")
+
+  // Step 4: Brand Voice
+  businessPersonality  String[] @map("business_personality")
+  keyMessages          String[] @map("key_messages")
+
+  // Step 5: Common Scenarios
+  commonCallReasons    String[] @map("common_call_reasons")
+  quoteHandling        String?  @map("quote_handling")
+  emergencyProtocol    String?  @map("emergency_protocol")
+  afterHoursProtocol   String?  @map("after_hours_protocol")
+
+  // Step 6: Greeting Script & Recording
+  greetingScript       String?  @map("greeting_script")
+  greetingAudioUrl     String?  @map("greeting_audio_url")
+
+  // Meta
+  currentStep          Int      @default(1) @map("current_step")
+  onboardingComplete   Boolean  @default(false) @map("onboarding_complete")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("company_profiles")
+  @@schema("public")
+}
+
+model AdminMessageTemplate {
+  id          String   @id @default(cuid())
+  category    String   // emergency, quote_request, general_inquiry, appointment, complaint, after_hours
+  name        String
+  messageText String   @map("message_text")
+  variables   String[] // e.g. ["businessName", "callerName", "businessHours"]
+  version     Int      @default(1)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([category, isActive])
+  @@map("admin_message_templates")
   @@schema("public")
 }
 

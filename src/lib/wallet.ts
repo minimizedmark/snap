@@ -24,6 +24,7 @@ export interface CreditWalletParams {
   userId: string;
   amount: number;
   description: string;
+  
   referenceId?: string;
 }
 

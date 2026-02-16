@@ -322,9 +322,9 @@ export default function OnboardingPage() {
                   <CheckCircle className="w-16 h-16 text-white mx-auto mb-4" style={{filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))'}} />
                   <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">Welcome to Snap Calls!</h3>
                   <p className="text-white mb-4 font-medium">Your forwarding number has been set up and is ready to start responding to missed calls.</p>
-                  <p className="text-sm text-white font-medium">Next: Customize your message templates in the dashboard.</p>
+                  <p className="text-sm text-white font-medium">Next: Set up your company profile so our AI can generate personalized responses.</p>
                 </div>
-                <button onClick={() => router.push('/dashboard')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Go to Dashboard</button>
+                <button onClick={() => router.push('/setup')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Continue Setup</button>
               </div>
             )}
           </div>

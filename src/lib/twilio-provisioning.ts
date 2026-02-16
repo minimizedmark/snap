@@ -82,6 +82,21 @@ export async function acquireNumber(params: {
 
   console.log('🔍 Acquiring number:', { userId, requestedAreaCode, country, isSnapLine });
 
+  // Dev/test mode: assign a fake number when Twilio admin credentials are not configured
+  if (!process.env.TWILIO_ADMIN_ACCOUNT_SID || !process.env.TWILIO_ADMIN_AUTH_TOKEN) {
+    const areaCodePart = requestedAreaCode || '555';
+    const randomSuffix = Math.floor(1000000 + Math.random() * 9000000).toString().slice(0, 7);
+    const testNumber = `+1${areaCodePart}${randomSuffix}`;
+    console.log('🧪 Dev mode: assigning test number (no Twilio admin credentials):', testNumber);
+    return {
+      phoneNumber: testNumber,
+      source: 'pool',
+      isRequestedAreaCode: !!requestedAreaCode,
+      isNonRegional: false,
+      isTemp: false,
+    };
+  }
+
   // Step 1: Try pool inventory with requested area code
   if (requestedAreaCode) {
     try {

@@ -14,6 +14,7 @@ import {
   Wallet,
   LogOut,
   RefreshCw,
+  FileText,
 } from 'lucide-react';
 
 interface Metrics {
@@ -181,6 +182,13 @@ export default function AdminDashboard() {
           >
             <Users className="w-5 h-5" />
             <span>Manage Users</span>
+          </button>
+          <button
+            onClick={() => router.push('/admin/templates')}
+            className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium transition-colors flex items-center space-x-2"
+          >
+            <FileText className="w-5 h-5" />
+            <span>Manage Templates</span>
           </button>
         </div>
 

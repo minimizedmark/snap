@@ -53,34 +53,44 @@ export async function POST(req: NextRequest) {
 
     /**
      * STEP 1: CHARGE WALLET FIRST
-     * 
+     *
      * We always charge before attempting number acquisition because:
      * 1. We control the wallet - refunds are trivial if needed
      * 2. Prevents race conditions where users get numbers without paying
      * 3. Twilio operations are external and unpredictable
+     *
+     * In dev/test mode (no Twilio admin credentials), skip the wallet charge.
      */
+    const isDevMode = !process.env.TWILIO_ADMIN_ACCOUNT_SID || !process.env.TWILIO_ADMIN_AUTH_TOKEN;
     let newBalance: number;
-    try {
-      newBalance = await debitWallet({
-        userId: user.id,
-        amount: PRICING.SETUP_FEE,
-        description: 'Phone number setup fee',
-        referenceId: `number_setup_${crypto.randomUUID()}`,
-      });
 
-      console.log('💰 Wallet debited:', {
-        userId: user.id,
-        amount: PRICING.SETUP_FEE,
-        newBalance,
-      });
-    } catch (error) {
-      if (error instanceof InsufficientBalanceError) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 402 }
-        );
+    if (isDevMode) {
+      console.log('🧪 Dev mode: skipping wallet debit for number setup');
+      const wallet = await prisma.wallet.findUnique({ where: { userId: user.id } });
+      newBalance = wallet ? Number(wallet.balance) : 0;
+    } else {
+      try {
+        newBalance = await debitWallet({
+          userId: user.id,
+          amount: PRICING.SETUP_FEE,
+          description: 'Phone number setup fee',
+          referenceId: `number_setup_${crypto.randomUUID()}`,
+        });
+
+        console.log('💰 Wallet debited:', {
+          userId: user.id,
+          amount: PRICING.SETUP_FEE,
+          newBalance,
+        });
+      } catch (error) {
+        if (error instanceof InsufficientBalanceError) {
+          return NextResponse.json(
+            { error: error.message },
+            { status: 402 }
+          );
+        }
+        throw error;
       }
-      throw error;
     }
 
     /**

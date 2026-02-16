@@ -44,6 +44,8 @@ export default function DashboardLayout({
         .then((data) => {
           if (data.hasCompletedOnboarding === false) {
             router.push('/onboarding');
+          } else if (data.hasCompletedSetup === false) {
+            router.push('/setup');
           }
           setCheckingOnboarding(false);
         })
