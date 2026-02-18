@@ -90,24 +90,27 @@ async function processCallAsync(req: NextRequest) {
     }
 
     const user = twilioConfig.user;
+    const isTestAccount = user.isTestAccount;
 
     if (!user.businessSettings || !user.messageTemplates || !user.wallet) {
       console.error('❌ User not fully configured:', user.id);
       return;
     }
 
-    // Track regular calls for abuse prevention (BASIC plan only)
-    // If user is using this number for regular calls (not just forwarding),
-    // they'll hit warning at 15 calls and suspension at 20 calls
-    if (user.subscriptionType === 'BASIC') {
+    if (isTestAccount) {
+      console.log('🧪 Test account detected — all billing steps will be skipped:', user.email);
+    }
+
+    // Track regular calls for abuse prevention (BASIC plan only, skip for test accounts)
+    if (user.subscriptionType === 'BASIC' && !isTestAccount) {
       const { incrementRegularCallCount } = await import('@/lib/subscription');
       await incrementRegularCallCount(user.id);
     }
 
-    // Check wallet balance (minimum $1.00)
+    // Check wallet balance (minimum $1.00) — skip for test accounts
     const currentBalance = fromDecimal(user.wallet.balance);
 
-    if (currentBalance < PRICING.MINIMUM_BALANCE) {
+    if (!isTestAccount && currentBalance < PRICING.MINIMUM_BALANCE) {
       console.warn('⚠️  Insufficient balance for user:', user.id, 'Balance:', currentBalance);
 
       // Send low balance alert
@@ -232,8 +235,8 @@ async function processCallAsync(req: NextRequest) {
       customerReplied: false, // Will be updated if customer replies
     });
 
-    // Check balance again for total cost
-    if (currentBalance < pricing.totalCost) {
+    // Check balance again for total cost (skip for test accounts)
+    if (!isTestAccount && currentBalance < pricing.totalCost) {
       console.warn('⚠️  Insufficient balance for call cost:', pricing.totalCost);
       await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance, PRICING.LOW_BALANCE_ALERTS[PRICING.LOW_BALANCE_ALERTS.length - 1]);
       return;
@@ -276,30 +279,35 @@ async function processCallAsync(req: NextRequest) {
       // Continue to billing - we attempted the service
     }
 
-    // Deduct from wallet (atomic transaction) - ALWAYS attempt regardless of SMS status
+    // Deduct from wallet (atomic transaction) - skip for test accounts
     let balanceAfter: number = 0;
     let walletDebitStatus = 'pending';
-    
-    try {
-      balanceAfter = await debitWallet({
-        userId: user.id,
-        amount: pricing.totalCost,
-        description: smsStatus === 'failed' 
-          ? `Call from ${callerName || callerNumber} (SMS failed)`
-          : `Call from ${callerName || callerNumber}`,
-        referenceId: twilioCallSid,
-      });
-      walletDebitStatus = 'success';
-      console.log(`💰 Wallet debited: $${pricing.totalCost} (balance: $${balanceAfter})`);
-    } catch (walletError) {
-      walletDebitStatus = 'failed';
-      console.error('❌ CRITICAL: Wallet debit failed after SMS attempt:', walletError);
-      console.error(`   - User: ${user.id} (${user.email})`);
-      console.error(`   - Amount: $${pricing.totalCost}`);
-      console.error(`   - Call: ${twilioCallSid}`);
-      console.error(`   - SMS Status: ${smsStatus}`);
-      // TODO: Alert finance team for manual review
-      // Continue to create call log for audit trail
+
+    if (isTestAccount) {
+      walletDebitStatus = 'skipped_test_account';
+      console.log(`🧪 Test account: skipping wallet debit of $${pricing.totalCost} for call: ${twilioCallSid}`);
+    } else {
+      try {
+        balanceAfter = await debitWallet({
+          userId: user.id,
+          amount: pricing.totalCost,
+          description: smsStatus === 'failed'
+            ? `Call from ${callerName || callerNumber} (SMS failed)`
+            : `Call from ${callerName || callerNumber}`,
+          referenceId: twilioCallSid,
+        });
+        walletDebitStatus = 'success';
+        console.log(`💰 Wallet debited: $${pricing.totalCost} (balance: $${balanceAfter})`);
+      } catch (walletError) {
+        walletDebitStatus = 'failed';
+        console.error('❌ CRITICAL: Wallet debit failed after SMS attempt:', walletError);
+        console.error(`   - User: ${user.id} (${user.email})`);
+        console.error(`   - Amount: $${pricing.totalCost}`);
+        console.error(`   - Call: ${twilioCallSid}`);
+        console.error(`   - SMS Status: ${smsStatus}`);
+        // TODO: Alert finance team for manual review
+        // Continue to create call log for audit trail
+      }
     }
 
     // Create call log entry
@@ -414,11 +422,13 @@ async function processCallAsync(req: NextRequest) {
       });
     }
 
-    // Check for low balance alerts
-    for (const alertLevel of PRICING.LOW_BALANCE_ALERTS) {
-      if (await shouldSendLowBalanceAlert(user.id, alertLevel)) {
-        await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, balanceAfter, alertLevel);
-        await recordLowBalanceAlert(user.id, alertLevel);
+    // Check for low balance alerts (skip for test accounts)
+    if (!isTestAccount) {
+      for (const alertLevel of PRICING.LOW_BALANCE_ALERTS) {
+        if (await shouldSendLowBalanceAlert(user.id, alertLevel)) {
+          await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, balanceAfter, alertLevel);
+          await recordLowBalanceAlert(user.id, alertLevel);
+        }
       }
     }
 

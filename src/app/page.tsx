@@ -65,7 +65,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-bold text-deep-black mb-3 uppercase tracking-wide">Pay As You Go</h3>
             <p className="text-charcoal-text font-medium">
-              Only $1 per call. No monthly fees, no contracts. Add funds to your wallet and only pay for what you use.
+              99¢ a call at standard rates, down to as low as 67¢ based on discounts for higher wallet loads. No monthly fees, no contracts. Add funds to your wallet and only pay for what you use.
             </p>
           </div>
 
@@ -132,6 +132,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-white">
             <p className="font-bold uppercase tracking-wider">&copy; {new Date().getFullYear()} Snap Calls. Never miss another customer.</p>
+            <p className="mt-2 text-sm text-gray-400">
+              <a href="/terms" className="hover:text-safety-orange transition-colors">Terms of Service</a>
+            </p>
           </div>
         </div>
       </footer>

@@ -49,7 +49,7 @@ function PaymentForm({ onSuccess, amount, totalCredit }: { onSuccess: () => void
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide"
       >
         {loading ? 'Processing...' : `Deposit $${amount} (Get $${totalCredit.toFixed(2)} credit)`}
       </button>
@@ -123,6 +123,12 @@ export default function OnboardingPage() {
 
       if (!res.ok) {
         setError(data?.error || 'Failed to start deposit');
+        return;
+      }
+
+      // Test account: wallet credited directly — skip Stripe form
+      if (data.testAccount) {
+        handlePaymentSuccess();
         return;
       }
 
@@ -265,7 +271,7 @@ export default function OnboardingPage() {
                       </div>
                     </div>
                     <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-4 text-sm text-white" style={{boxShadow: '0 0 10px rgba(255, 107, 0, 0.2)'}}>
-                      <p className="mb-2 font-medium"><strong className="text-safety-orange uppercase tracking-wider">Important:</strong> Your Snap number is for <strong className="text-safety-orange">call forwarding only</strong> (forwards missed calls to your real phone).</p>
+                      <p className="mb-2 font-medium"><strong className="text-safety-orange uppercase tracking-wider">Important:</strong> Your Snap number is for <strong className="text-safety-orange">call forwarding only</strong> (forwards missed calls from your real phone).</p>
                       <p className="font-medium">If you use it for regular inbound/outbound calls, service will be suspended at 20 calls. To use as a full business phone line, upgrade to <strong className="text-safety-orange">SnapLine ($20/month)</strong> anytime.</p>
                       <p className="mt-3 font-medium">By continuing, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-safety-orange hover:underline font-bold">Terms of Service</a>.</p>
                     </div>
@@ -280,7 +286,7 @@ export default function OnboardingPage() {
                 ) : (
                   <>
                     {stripePromise ? (
-                      <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat', variables: { colorPrimary: '#FF6B00', colorBackground: '#ffffff', colorText: '#333333', colorDanger: '#df1b41', borderRadius: '6px', fontFamily: 'system-ui, sans-serif' }, rules: { '.Input': { border: '2px solid #e5e7eb', boxShadow: 'none' }, '.Input:focus': { border: '2px solid #FF6B00', boxShadow: '0 0 8px rgba(255, 107, 0, 0.2)' }, '.Label': { fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '12px', color: '#333333' } } } }}>
                         <PaymentForm onSuccess={handlePaymentSuccess} amount={depositAmount} totalCredit={totalCredit} />
                       </Elements>
                     ) : (
@@ -301,6 +307,7 @@ export default function OnboardingPage() {
                   <p className="text-sm text-white mb-2 font-bold uppercase tracking-wider">✓ Wallet loaded successfully!</p>
                   <p className="text-sm text-white font-medium">Now we will assign you a dedicated <strong>call forwarding number</strong>. The $5 setup fee will be deducted from your wallet.</p>
                   <p className="text-xs text-white mt-3 font-medium"><strong>Reminder:</strong> This number is for forwarding missed calls only. Want full phone service? Upgrade to SnapLine later!</p>
+                  <p className="text-xs text-white mt-2 font-medium"><strong>Note:</strong> If your wallet remains empty for 45 consecutive days, your account will be considered closed and your number will be returned to the pool for reassignment.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Preferred Area Code (Optional)</label>

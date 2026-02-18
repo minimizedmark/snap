@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { createPaymentIntent, createStripeCustomer } from '@/lib/stripe';
 import { PRICING } from '@/lib/pricing';
+import { creditWallet } from '@/lib/wallet';
 
 /**
  * Create a payment intent for wallet deposit
@@ -22,9 +23,28 @@ export async function POST(req: NextRequest) {
     // Validate amount - must be at least $20 or one of the bonus tiers
     const validAmounts = [20, 30, 50, 100];
     if (!amount || !validAmounts.includes(amount)) {
-      return NextResponse.json({ 
-        error: `Invalid amount. Please select $20, $30, $50, or $100` 
+      return NextResponse.json({
+        error: `Invalid amount. Please select $20, $30, $50, or $100`
       }, { status: 400 });
+    }
+
+    // Test account: skip Stripe entirely — credit wallet directly and return success
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isTestAccount: true },
+    });
+
+    if (user?.isTestAccount) {
+      const bonusInfo = PRICING.WALLET_DEPOSITS[amount as keyof typeof PRICING.WALLET_DEPOSITS] ?? { bonus: 0 };
+      const totalCredit = amount + bonusInfo.bonus;
+      const newBalance = await creditWallet({
+        userId: session.user.id,
+        amount: totalCredit,
+        description: `Test account wallet credit ($${amount} + $${bonusInfo.bonus} bonus)`,
+        referenceId: `test_deposit_${Date.now()}`,
+      });
+      console.log(`🧪 Test account wallet credited: $${totalCredit} (balance: $${newBalance})`);
+      return NextResponse.json({ success: true, testAccount: true, newBalance });
     }
 
     // Get or create Stripe customer

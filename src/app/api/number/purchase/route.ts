@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     const { areaCode, country = 'US' } = body;
 
     const isSnapLine = user.subscriptionType === 'SNAPLINE';
+    const isTestAccount = user.isTestAccount;
 
     console.log('📞 Number purchase request:', {
       userId: user.id,
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
       areaCode: areaCode || 'any',
       country,
       isSnapLine,
+      isTestAccount,
     });
 
     /**
@@ -60,12 +62,17 @@ export async function POST(req: NextRequest) {
      * 3. Twilio operations are external and unpredictable
      *
      * In dev/test mode (no Twilio admin credentials), skip the wallet charge.
+     * Also skip for test accounts regardless of environment.
      */
     const isDevMode = !process.env.TWILIO_ADMIN_ACCOUNT_SID || !process.env.TWILIO_ADMIN_AUTH_TOKEN;
     let newBalance: number;
 
-    if (isDevMode) {
-      console.log('🧪 Dev mode: skipping wallet debit for number setup');
+    if (isDevMode || isTestAccount) {
+      if (isTestAccount) {
+        console.log('🧪 Test account: skipping wallet debit for number setup');
+      } else {
+        console.log('🧪 Dev mode: skipping wallet debit for number setup');
+      }
       const wallet = await prisma.wallet.findUnique({ where: { userId: user.id } });
       newBalance = wallet ? Number(wallet.balance) : 0;
     } else {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { releaseNumberToInventory } from '@/lib/number-inventory';
 
-const DAYS_EMPTY_WALLET = 30;
+const DAYS_EMPTY_WALLET = 45;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       where: {
+        isTestAccount: false,
         wallet: { balance: 0 },
         twilioConfig: { isNot: null },
       },

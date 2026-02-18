@@ -18,6 +18,9 @@ model User {
   timezone  String   @default("America/New_York")
   isActive  Boolean  @default(true) @map("is_active")
   
+  // Test account flag - bypasses all payment features
+  isTestAccount        Boolean          @default(false) @map("is_test_account")
+
   // Subscription tracking
   setupFeePaid         Boolean          @default(false) @map("setup_fee_paid")
   subscriptionType     SubscriptionType @default(BASIC) @map("subscription_type")

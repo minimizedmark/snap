@@ -7,5 +7,6 @@
     "claudeCode.useTerminal": true,
     "editor.fontSize": 8,
     "editor.mouseWheelZoom": true,
-    "claudeCodeChat.permissions.yoloMode": true
+    "claudeCodeChat.permissions.yoloMode": true,
+    "prisma.pinToPrisma6": true
 }

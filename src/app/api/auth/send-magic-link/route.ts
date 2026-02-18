@@ -31,6 +31,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, token });
     }
 
+    // Test account: skip email in any environment — return token directly for auto-login
+    const maybeTestUser = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, isTestAccount: true },
+    });
+    if (maybeTestUser?.isTestAccount) {
+      const token = uuidv4();
+      await prisma.magicLink.create({
+        data: {
+          token,
+          userId: maybeTestUser.id,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          used: false,
+        },
+      });
+      return NextResponse.json({ success: true, token });
+    }
+
     // Production: send magic link email
     const token = await createMagicLink(email);
 
