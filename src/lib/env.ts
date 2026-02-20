@@ -117,6 +117,9 @@ export const env = Object.freeze({
   
   // Cron
   CRON_SECRET: getRequiredEnv('CRON_SECRET', 'cron-secret-dev-change-in-prod'),
+
+  // Demo access (sales tool — gates test account bypass)
+  DEMO_ACCESS_KEY: getOptionalEnv('DEMO_ACCESS_KEY', ''),
   
   // AI Services
   OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY', ''), // Whisper-1 voicemail transcription
