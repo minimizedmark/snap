@@ -339,6 +339,7 @@ export default function SetupPage() {
 
   // Step 1
   const [businessType, setBusinessType] = useState('');
+  const [businessDescription, setBusinessDescription] = useState('');
   const [primaryServices, setPrimaryServices] = useState<string[]>([]);
   const [serviceAreas, setServiceAreas] = useState<string[]>(['']);
   const [extraAnswers, setExtraAnswers] = useState<string[]>([]);
@@ -397,6 +398,7 @@ export default function SetupPage() {
         if (data.profile) {
           const p = data.profile;
           if (p.businessType) setBusinessType(p.businessType);
+          if (p.businessDescription) setBusinessDescription(p.businessDescription as string);
           if (p.primaryServices?.length) setPrimaryServices(p.primaryServices);
           if (p.serviceAreas?.length) setServiceAreas(p.serviceAreas);
           if (p.businessHours) setBusinessHours(p.businessHours as BusinessHoursMap);
@@ -437,8 +439,9 @@ export default function SetupPage() {
   // Reset services/calls when business type changes
   const handleBusinessTypeChange = (type: string) => {
     setBusinessType(type);
-    setPrimaryServices([]);
-    setCommonCallReasons([]);
+    setBusinessDescription('');
+    setPrimaryServices(type === 'Other' ? ['', '', ''] : []);
+    setCommonCallReasons(type === 'Other' ? ['', '', ''] : []);
     setExtraAnswers([]);
   };
 
@@ -479,7 +482,7 @@ export default function SetupPage() {
 
   const getCurrentStepData = (): Record<string, unknown> | null => {
     switch (step) {
-      case 1: return { businessType, primaryServices, serviceAreas: serviceAreas.filter(Boolean) };
+      case 1: return { businessType, businessDescription, primaryServices, serviceAreas: serviceAreas.filter(Boolean) };
       case 2: return { businessHours, emergencyServices, emergencyDefinition, responseTimeframe };
       case 3: return { staffMembers: staffMembers.filter(s => s.name), callRoutingRules };
       case 4: return { businessPersonality, keyMessages };
@@ -705,25 +708,61 @@ export default function SetupPage() {
                   />
                 )}
 
-                {/* Other business type - free text services */}
+                {/* Other business type - generalized flow */}
                 {businessType === 'Other' && (
-                  <div>
-                    <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Your Services</label>
-                    {(primaryServices.length === 0 ? ['', '', ''] : primaryServices).map((service, idx) => (
-                      <div key={idx} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={service}
-                          onChange={(e) => {
-                            const list = primaryServices.length === 0 ? ['', '', ''] : [...primaryServices];
-                            list[idx] = e.target.value;
-                            setPrimaryServices(list);
-                          }}
-                          className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                          placeholder={`Service ${idx + 1}`}
-                        />
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="business-description" className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">
+                        What Does Your Business Do?
+                      </label>
+                      <textarea
+                        id="business-description"
+                        name="business-description"
+                        value={businessDescription}
+                        onChange={(e) => setBusinessDescription(e.target.value)}
+                        rows={3}
+                        className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
+                        placeholder="Briefly describe what your business does and who your customers are (e.g. &quot;We run a dog grooming salon serving pet owners in Austin&quot;)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Your Services</label>
+                      {primaryServices.map((service, idx) => (
+                        <div key={idx} className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="text"
+                            name={`service-${idx}`}
+                            value={service}
+                            onChange={(e) => {
+                              const updated = [...primaryServices];
+                              updated[idx] = e.target.value;
+                              setPrimaryServices(updated);
+                            }}
+                            className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
+                            placeholder={`Service ${idx + 1}`}
+                            aria-label={`Service ${idx + 1}`}
+                          />
+                          {primaryServices.length > 1 && (
+                            <button
+                              onClick={() => setPrimaryServices(primaryServices.filter((_, i) => i !== idx))}
+                              className="text-gray-400 hover:text-red-500 snap-transition"
+                              aria-label="Remove service"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {primaryServices.length < 10 && (
+                        <button
+                          onClick={() => setPrimaryServices([...primaryServices, ''])}
+                          className="flex items-center space-x-1 text-sm text-safety-orange hover:text-[#E65F00] snap-transition font-bold"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Add Service</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -763,8 +802,8 @@ export default function SetupPage() {
                 </div>
 
                 <button
-                  onClick={() => handleNext(1, { businessType, primaryServices, serviceAreas: serviceAreas.filter(Boolean) })}
-                  disabled={!businessType || primaryServices.length < 1 || loading}
+                  onClick={() => handleNext(1, { businessType, businessDescription, primaryServices: primaryServices.filter(Boolean), serviceAreas: serviceAreas.filter(Boolean) })}
+                  disabled={!businessType || primaryServices.filter(Boolean).length < 1 || (businessType === 'Other' && !businessDescription.trim()) || loading}
                   className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
                 >
                   <span>{loading ? 'Saving...' : 'Continue'}</span>
@@ -1045,21 +1084,41 @@ export default function SetupPage() {
                 ) : (
                   <div>
                     <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Common Call Reasons</label>
-                    {(commonCallReasons.length === 0 ? ['', '', ''] : commonCallReasons).map((reason, idx) => (
+                    {commonCallReasons.map((reason, idx) => (
                       <div key={idx} className="flex items-center space-x-2 mb-2">
                         <input
                           type="text"
+                          name={`call-reason-${idx}`}
                           value={reason}
                           onChange={(e) => {
-                            const list = commonCallReasons.length === 0 ? ['', '', ''] : [...commonCallReasons];
-                            list[idx] = e.target.value;
-                            setCommonCallReasons(list);
+                            const updated = [...commonCallReasons];
+                            updated[idx] = e.target.value;
+                            setCommonCallReasons(updated);
                           }}
                           className="input-snap flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
                           placeholder={`Reason ${idx + 1}`}
+                          aria-label={`Call reason ${idx + 1}`}
                         />
+                        {commonCallReasons.length > 1 && (
+                          <button
+                            onClick={() => setCommonCallReasons(commonCallReasons.filter((_, i) => i !== idx))}
+                            className="text-gray-400 hover:text-red-500 snap-transition"
+                            aria-label="Remove reason"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     ))}
+                    {commonCallReasons.length < 10 && (
+                      <button
+                        onClick={() => setCommonCallReasons([...commonCallReasons, ''])}
+                        className="flex items-center space-x-1 text-sm text-safety-orange hover:text-[#E65F00] snap-transition font-bold"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Reason</span>
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1091,12 +1150,12 @@ export default function SetupPage() {
                   <button onClick={() => setStep(4)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
                   <button
                     onClick={() => handleNext(5, {
-                      commonCallReasons,
+                      commonCallReasons: commonCallReasons.filter(Boolean),
                       quoteHandling: quoteHandling.join('; '),
                       emergencyProtocol: emergencyProtocol.join('; '),
                       afterHoursProtocol: afterHoursProtocol.join('; '),
                     })}
-                    disabled={commonCallReasons.length < 1 || loading}
+                    disabled={commonCallReasons.filter(Boolean).length < 1 || loading}
                     className="btn-snap-light flex-1 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
                   >
                     <span>{loading ? 'Saving...' : 'Continue'}</span>
