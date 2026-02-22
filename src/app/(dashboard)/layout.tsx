@@ -17,12 +17,12 @@ import {
 import { useState, useEffect } from 'react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Call Logs', href: '/calls', icon: Phone },
-  { name: 'Wallet', href: '/wallet', icon: Wallet },
-  { name: 'Messages', href: '/messages', icon: MessageSquare },
-  { name: 'VIP Contacts', href: '/vip', icon: Users },
-  { name: 'Settings', href: '/settings/business', icon: Settings },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, comingSoon: false },
+  { name: 'Call Logs', href: '/calls', icon: Phone, comingSoon: false },
+  { name: 'Wallet', href: '/wallet', icon: Wallet, comingSoon: false },
+  { name: 'Messages', href: '/messages', icon: MessageSquare, comingSoon: false },
+  { name: 'VIP Contacts', href: '/vip', icon: Users, comingSoon: true },
+  { name: 'Settings', href: '/settings/business', icon: Settings, comingSoon: false },
 ];
 
 export default function DashboardLayout({
@@ -117,6 +117,20 @@ export default function DashboardLayout({
           <nav className="flex-1 px-4 py-6 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname?.startsWith(item.href);
+              if (item.comingSoon) {
+                return (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg font-bold uppercase tracking-wide text-gray-400 cursor-not-allowed"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <item.icon className="w-5 h-5" />
+                      <span className="text-xs">{item.name}</span>
+                    </div>
+                    <span className="text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">Soon</span>
+                  </div>
+                );
+              }
               return (
                 <Link
                   key={item.name}
@@ -124,7 +138,7 @@ export default function DashboardLayout({
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg snap-transition font-bold uppercase tracking-wide ${
                     isActive
-                      ? 'bg-safety-orange text-white border-2 border-white' 
+                      ? 'bg-safety-orange text-white border-2 border-white'
                       : 'text-charcoal-text hover:bg-safety-orange/10 hover:text-safety-orange'
                   }`}
                   style={isActive ? {boxShadow: '0 0 8px rgba(255, 107, 0, 0.4)'} : {}}

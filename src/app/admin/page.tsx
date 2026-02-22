@@ -15,6 +15,8 @@ import {
   LogOut,
   RefreshCw,
   FileText,
+  Play,
+  Loader2,
 } from 'lucide-react';
 
 interface Metrics {
@@ -68,6 +70,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoInfo, setDemoInfo] = useState<{ phoneNumber: string; loginUrl: string } | null>(null);
+  const [demoError, setDemoError] = useState('');
 
   const fetchMetrics = async () => {
     try {
@@ -102,6 +107,23 @@ export default function AdminDashboard() {
     const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
   }, [autoRefresh]);
+
+  const handleLaunchDemo = async () => {
+    setDemoLoading(true);
+    setDemoError('');
+    setDemoInfo(null);
+    try {
+      const res = await fetch('/api/admin/test-account', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to set up demo account');
+      setDemoInfo({ phoneNumber: data.phoneNumber, loginUrl: data.loginUrl });
+      window.open(data.loginUrl, '_blank');
+    } catch (err: any) {
+      setDemoError(err.message || 'Failed to launch demo');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' });
@@ -175,7 +197,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* NAVIGATION */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 flex-wrap gap-y-2">
           <button
             onClick={() => router.push('/admin/users')}
             className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium transition-colors flex items-center space-x-2"
@@ -190,7 +212,35 @@ export default function AdminDashboard() {
             <FileText className="w-5 h-5" />
             <span>Manage Templates</span>
           </button>
+          <button
+            onClick={handleLaunchDemo}
+            disabled={demoLoading}
+            className="px-6 py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 rounded-lg font-medium transition-colors flex items-center space-x-2"
+          >
+            {demoLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+            <span>{demoLoading ? 'Launching...' : 'Launch Demo'}</span>
+          </button>
         </div>
+
+        {/* DEMO STATUS */}
+        {demoError && (
+          <div className="bg-red-900/50 border border-red-500 rounded-lg p-4 text-red-300">
+            {demoError}
+          </div>
+        )}
+        {demoInfo && (
+          <div className="bg-orange-900/30 border border-orange-500 rounded-lg p-4">
+            <p className="text-orange-300 font-bold mb-2">Demo Ready</p>
+            <p className="text-sm text-gray-300">Demo phone number: <span className="font-mono text-white">{demoInfo.phoneNumber}</span></p>
+            <p className="text-xs text-gray-400 mt-1">Dashboard opened in new tab. Have the contractor call the number above.</p>
+            <button
+              onClick={() => window.open(demoInfo.loginUrl, '_blank')}
+              className="mt-2 text-sm text-orange-400 hover:text-orange-300 underline"
+            >
+              Reopen dashboard tab
+            </button>
+          </div>
+        )}
 
         {/* REAL-TIME ALERTS */}
         {alerts.length > 0 && (

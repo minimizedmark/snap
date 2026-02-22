@@ -5,22 +5,16 @@ import { NextRequest, NextResponse } from 'next/server';
  * In production, use a proper auth system
  */
 export function isAdminAuthenticated(req: NextRequest): boolean {
-  const authHeader = req.headers.get('authorization');
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
-  if (!adminPassword) {
-    console.error('⚠️ ADMIN_PASSWORD not set in environment');
+  if (!adminPasswordHash) {
+    console.error('⚠️ ADMIN_PASSWORD_HASH not set in environment');
     return false;
   }
 
-  // Check cookie first
-  const adminToken = req.cookies.get('admin_token')?.value;
-  if (adminToken === adminPassword) {
-    return true;
-  }
-
-  // Check Authorization header
-  if (authHeader === `Bearer ${adminPassword}`) {
+  // Check cookie
+  const adminToken = req.cookies.get('admin_auth')?.value;
+  if (adminToken === adminPasswordHash) {
     return true;
   }
 

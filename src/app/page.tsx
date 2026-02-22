@@ -79,7 +79,8 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-white border-4 border-safety-orange p-8 rounded-xl" style={{boxShadow: '0 4px 20px rgba(255, 107, 0, 0.15)'}}>
+          <div className="bg-white border-4 border-safety-orange p-8 rounded-xl relative" style={{boxShadow: '0 4px 20px rgba(255, 107, 0, 0.15)'}}>
+            <span className="absolute top-3 right-3 bg-safety-orange text-white text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">Coming Soon</span>
             <div className="w-12 h-12 bg-safety-orange rounded flex items-center justify-center mb-4 border-2 border-white" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
               <Users className="w-6 h-6 text-white" />
             </div>
