@@ -21,36 +21,57 @@ export async function POST(req: NextRequest) {
 
     const businessName = businessSettings?.businessName || 'your business';
     const businessType = profile?.businessType || 'service business';
-    const services = profile?.primaryServices?.join(', ') || 'general services';
-    const personality = profile?.businessPersonality?.join(', ') || 'professional, friendly';
+    const services = Array.isArray(profile?.primaryServices) && profile.primaryServices.length
+      ? profile.primaryServices.slice(0, 3).join(', ')
+      : 'general services';
+    const personality = Array.isArray(profile?.businessPersonality) && profile.businessPersonality.length
+      ? profile.businessPersonality.join(', ')
+      : 'warm, professional';
+    const keyMessages = Array.isArray(profile?.keyMessages) && profile.keyMessages.length
+      ? profile.keyMessages.slice(0, 2).join(', ')
+      : '';
 
-    const prompt = `Generate a phone greeting script for ${businessName}, a ${businessType} offering ${services}.
+    // Extract owner name from staff members
+    const staffMembers = profile?.staffMembers as Array<{ name: string; role: string }> | null;
+    let ownerName = businessName;
+    if (staffMembers && staffMembers.length > 0) {
+      const owner = staffMembers.find((m) => m.role === 'Owner' && m.name?.trim());
+      const anyNamed = staffMembers.find((m) => m.name?.trim());
+      ownerName = owner?.name || anyNamed?.name || businessName;
+    }
 
-The tone should be: ${personality}.
+    const prompt = `You are writing a voicemail greeting script for a real person who runs a small business.
 
-The greeting should:
-1. Welcome the caller warmly
-2. Mention the business name
-3. Briefly mention what services are offered
-4. Let them know their call is important
-5. Ask them to leave a message with their name, number, and reason for calling
-6. Mention they'll receive a text response shortly
+Business: ${businessName}
+Owner/contact: ${ownerName}
+Industry: ${businessType}
+Services: ${services}
+Tone: ${personality}${keyMessages ? `\nKey messages: ${keyMessages}` : ''}
 
-Keep it under 30 seconds when spoken (roughly 75-90 words). Write it naturally as if being spoken aloud.
+Write a personal, warm voicemail greeting script with these STRICT requirements:
+1. Maximum 60 words total — count every word carefully before outputting
+2. Use the owner's name naturally (e.g. "Hi, this is ${ownerName} with ${businessName}...")
+3. Include ONE specific value statement tied to their actual trade — not generic filler like "your call is important to us"
+4. Sound like a real human speaking, conversational and warm — no corporate language
+5. Do NOT ask callers to leave a message and do NOT mention texting
+6. End with EXACTLY this phrase: "we'll get back to you faster than you think."
+7. Output the script only — no labels, no quotes, no formatting, no word count
 
-Script only, no formatting or labels:`;
+Example of the right tone and format:
+"Hi, you've reached Mike with Riverside HVAC. We handle everything from emergency furnace repairs to full AC installs — and we know you can't wait when something breaks. We've got you covered, so leave us a quick message and we'll get back to you faster than you think."`;
 
     const result = await generateAiResponse({
       prompt,
       businessName,
-      maxTokens: 300,
-      temperature: 0.6,
+      maxTokens: 200,
+      temperature: 0.5,
     });
 
-    // If AI is not configured, provide a default template
-    const script = result.text.startsWith('[AI')
-      ? `Thank you for calling ${businessName}! We specialize in ${services} and we're sorry we missed your call. Your call is very important to us. Please leave your name, phone number, and a brief message about how we can help you. We'll send you a text message shortly and get back to you as soon as possible. Thank you and have a great day!`
-      : result.text;
+    // If AI is not configured or returns an error, use a personalized fallback
+    const aiText = result.text.trim();
+    const script = (!aiText || aiText.startsWith('[AI') || aiText.startsWith('['))
+      ? `Hi, you've reached ${ownerName} with ${businessName}. We specialize in ${services} and take every customer seriously. Leave us a quick message and we'll get back to you faster than you think.`
+      : aiText;
 
     return NextResponse.json({ script });
   } catch (error) {

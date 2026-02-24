@@ -323,15 +323,25 @@ export default function OnboardingPage() {
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
                   <CheckCircle className="w-6 h-6 text-safety-orange" />
-                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">You are all set!</h2>
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">You&apos;re all set!</h2>
                 </div>
                 <div className="bg-safety-orange border-2 border-white rounded-lg p-6 text-center" style={{boxShadow: '0 0 20px rgba(255, 107, 0, 0.4)'}}>
                   <CheckCircle className="w-16 h-16 text-white mx-auto mb-4" style={{filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))'}} />
                   <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">Welcome to Snap Calls!</h3>
-                  <p className="text-white mb-4 font-medium">Your forwarding number has been set up and is ready to start responding to missed calls.</p>
-                  <p className="text-sm text-white font-medium">Next: Set up your company profile so our AI can generate personalized responses.</p>
+                  <p className="text-white font-medium">Your account is ready. One last thing to activate it.</p>
                 </div>
-                <button onClick={() => router.push('/setup')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Continue Setup</button>
+
+                <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-5 space-y-3" style={{boxShadow: '0 0 10px rgba(255, 107, 0, 0.15)'}}>
+                  <p className="text-safety-orange font-bold text-sm uppercase tracking-wider">Here&apos;s how it works:</p>
+                  <p className="text-white font-medium text-sm leading-relaxed">
+                    On your dashboard you&apos;ll find a <strong className="text-safety-orange">forwarding number</strong>. Just forward your existing phone to it — that&apos;s it.
+                  </p>
+                  <p className="text-white font-medium text-sm leading-relaxed">
+                    Every time someone calls you and you can&apos;t pick up, SnapCalls catches it and handles it automatically. <strong className="text-safety-orange">No app. No hardware. Takes 30 seconds to set up.</strong>
+                  </p>
+                </div>
+
+                <button onClick={() => router.push('/setup')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Continue Setup →</button>
               </div>
             )}
           </div>

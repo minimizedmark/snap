@@ -239,6 +239,26 @@ export async function POST(req: NextRequest) {
     });
 
     /**
+     * STEP 4.5: CREATE DEFAULT MESSAGE TEMPLATES
+     *
+     * Every user needs message templates for the call webhook to function.
+     * Create them here if they don't already exist.
+     */
+    const existingTemplates = await prisma.messageTemplates.findUnique({ where: { userId: user.id } });
+    if (!existingTemplates) {
+      const businessName = (await prisma.businessSettings.findUnique({ where: { userId: user.id } }))?.businessName || 'us';
+      await prisma.messageTemplates.create({
+        data: {
+          userId: user.id,
+          standardResponse: `Hey, you just called ${businessName}. We would have loved to help — what can we do for you?`,
+          voicemailResponse: `Hey, got your voicemail! We'll get back to you shortly. — ${businessName}`,
+          afterHoursResponse: `Hey, you just called ${businessName}. We're closed right now but we'll get back to you first thing. What can we help with?`,
+        },
+      });
+      console.log('✅ Default message templates created for user:', user.id);
+    }
+
+    /**
      * STEP 5: SEND SUCCESS EMAIL
      */
     try {

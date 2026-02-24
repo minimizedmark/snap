@@ -132,11 +132,11 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         standardResponse:
-          'Hi! Sorry we missed your call. We\'ll get back to you shortly. — Test Business',
+          'Hey, you just called Test Business. We would have loved to help — what can we do for you?',
         voicemailResponse:
-          'Hi! Thanks for leaving a voicemail. We\'ll review it and call you back soon. — Test Business',
+          'Hey, got your voicemail! We\'ll get back to you shortly. — Test Business',
         afterHoursResponse:
-          'Hi! Our office is currently closed. We\'re open Mon-Fri 9am-5pm and will return your call then. — Test Business',
+          'Hey, you just called Test Business. We\'re closed right now but we\'ll get back to you first thing. What can we help with?',
       },
     });
   }

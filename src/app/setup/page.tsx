@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Phone,
@@ -13,11 +13,11 @@ import {
   X,
   ChevronRight,
   CheckCircle,
-  Play,
-  Square,
-  RotateCcw,
-  Save,
   Sparkles,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
+  Save,
 } from 'lucide-react';
 
 // ─── Industry Data ───────────────────────────────────────────────────────────
@@ -328,6 +328,57 @@ function RadioGroup({
   );
 }
 
+// ─── Generating Sub-Step Component ───────────────────────────────────────────
+
+function GeneratingSubStep({
+  onGenerated,
+  onError,
+}: {
+  onGenerated: (script: string) => void;
+  onError: (msg: string) => void;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  const generate = async () => {
+    setFailed(false);
+    try {
+      const res = await fetch('/api/onboarding/company-profile/generate-script', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate');
+      onGenerated(data.script);
+    } catch (err) {
+      setFailed(true);
+      onError(err instanceof Error ? err.message : 'Failed to generate script');
+    }
+  };
+
+  useEffect(() => {
+    generate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (failed) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 font-bold mb-4">Couldn&apos;t generate your script. Please try again.</p>
+        <button onClick={generate} className="btn-snap-light px-6 py-3 rounded-lg font-bold uppercase tracking-wide">
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-center py-16">
+      <div className="w-16 h-16 bg-safety-orange rounded-full flex items-center justify-center mx-auto mb-6" style={{ boxShadow: '0 0 20px rgba(255, 107, 0, 0.4)' }}>
+        <Sparkles className="w-8 h-8 text-white animate-pulse" />
+      </div>
+      <p className="text-xl font-bold text-deep-black uppercase tracking-wide mb-2">Writing Your Personal Script...</p>
+      <p className="text-gray-500 text-sm">Using your business profile to craft something specific to you.</p>
+    </div>
+  );
+}
+
 // ─── Main Setup Page ─────────────────────────────────────────────────────────
 
 export default function SetupPage() {
@@ -377,15 +428,9 @@ export default function SetupPage() {
   // Step 6
   const [greetingScript, setGreetingScript] = useState('');
   const [generatingScript, setGeneratingScript] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [mediaSupported, setMediaSupported] = useState(true);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [scriptStep, setScriptStep] = useState<1 | 2 | 3>(1); // 1=education, 2=generating, 3=review
+  const [existingRecordingUrl, setExistingRecordingUrl] = useState<string | null>(null);
+  const [completingSetup, setCompletingSetup] = useState(false);
 
   // Get current industry data
   const industryInfo = INDUSTRY_DATA[businessType] || null;
@@ -421,19 +466,12 @@ export default function SetupPage() {
             setAfterHoursProtocol(Array.isArray(p.afterHoursProtocol) ? p.afterHoursProtocol : [p.afterHoursProtocol]);
           }
           if (p.greetingScript) setGreetingScript(p.greetingScript);
-          if (p.greetingAudioUrl) setUploadedUrl(p.greetingAudioUrl);
+          if (p.greetingAudioUrl) setExistingRecordingUrl(p.greetingAudioUrl);
           if (p.currentStep && p.currentStep > 1) setStep(p.currentStep);
         }
       })
       .catch(() => {})
       .finally(() => setInitialLoading(false));
-  }, []);
-
-  // Check media support
-  useEffect(() => {
-    if (typeof navigator !== 'undefined' && !navigator.mediaDevices?.getUserMedia) {
-      setMediaSupported(false);
-    }
   }, []);
 
   // Reset services/calls when business type changes
@@ -492,7 +530,7 @@ export default function SetupPage() {
         emergencyProtocol: emergencyProtocol.join('; '),
         afterHoursProtocol: afterHoursProtocol.join('; '),
       };
-      case 6: return { greetingScript, greetingAudioUrl: uploadedUrl };
+      case 6: return { greetingScript };
       default: return null;
     }
   };
@@ -507,6 +545,7 @@ export default function SetupPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to generate');
       setGreetingScript(data.script);
+      setScriptStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate script');
     } finally {
@@ -514,91 +553,27 @@ export default function SetupPage() {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-      setRecordingTime(0);
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
-        stream.getTracks().forEach((t) => t.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-
-      timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => {
-          if (prev >= 30) {
-            mediaRecorder.stop();
-            setIsRecording(false);
-            if (timerRef.current) clearInterval(timerRef.current);
-            return 30;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } catch {
-      setError('Microphone access denied. Please allow microphone access to record.');
-    }
+  const handleSaveScriptAndRecord = async () => {
+    const success = await saveStep(6, { greetingScript });
+    if (success) router.push('/setup/record');
   };
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-  }, [isRecording]);
-
-  const reRecord = () => {
-    setAudioBlob(null);
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    setAudioUrl(null);
-    setRecordingTime(0);
-  };
-
-  const uploadAudio = async () => {
-    if (!audioBlob) return;
-    setLoading(true);
+  const handleCompleteFromBanner = async () => {
+    setCompletingSetup(true);
     setError(null);
     try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'greeting.webm');
-      const res = await fetch('/api/upload-greeting', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
-      setUploadedUrl(data.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleComplete = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await saveStep(6, { greetingScript, greetingAudioUrl: uploadedUrl });
       const res = await fetch('/api/onboarding/company-profile', { method: 'PATCH' });
       if (!res.ok) throw new Error('Failed to complete setup');
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to complete');
     } finally {
-      setLoading(false);
+      setCompletingSetup(false);
     }
   };
+
+  // Word count helper
+  const wordCount = greetingScript.trim() ? greetingScript.trim().split(/\s+/).length : 0;
 
   // Dynamic list helpers
   const addToList = (list: string[], setList: (v: string[]) => void, max = 10) => {
@@ -1165,141 +1140,158 @@ export default function SetupPage() {
               </div>
             )}
 
-            {/* ─── Step 6: Greeting Script & Recording ─── */}
+            {/* ─── Step 6: Greeting Script ─── */}
             {step === 6 && (
               <div className="space-y-6">
-                <div className="flex items-center space-x-3 mb-6">
-                  <Mic className="w-6 h-6 text-safety-orange" />
-                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Greeting Script & Recording</h2>
-                </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-bold text-charcoal-text uppercase tracking-wider">Greeting Script</label>
-                    <button
-                      onClick={handleGenerateScript}
-                      disabled={generatingScript}
-                      className="flex items-center space-x-1 text-sm text-safety-orange hover:text-[#E65F00] snap-transition font-bold disabled:opacity-50"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>{generatingScript ? 'Generating...' : 'Generate Script'}</span>
-                    </button>
-                  </div>
-                  <textarea
-                    value={greetingScript}
-                    onChange={(e) => setGreetingScript(e.target.value)}
-                    className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition"
-                    rows={6}
-                    placeholder="Your greeting script will appear here. Click 'Generate Script' to create one based on your profile, or write your own..."
-                  />
-                </div>
-
-                <div className="border-2 border-gray-200 rounded-lg p-6">
-                  <h3 className="text-sm font-bold text-charcoal-text mb-4 uppercase tracking-wider">Record Your Greeting</h3>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-amber-900 font-medium mb-2">Tips for the best greeting:</p>
-                    <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
-                      <li>Use the generated script above as your guide — read it naturally</li>
-                      <li>Speak clearly and at a steady pace</li>
-                      <li>Record in a quiet room with no background noise</li>
-                      <li>Smile while you talk — it comes through in your voice</li>
-                      <li>Keep it under 20 seconds for the best caller experience</li>
-                    </ul>
-                  </div>
-
-                  {!mediaSupported ? (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                      <p className="text-sm text-yellow-800">Your browser does not support audio recording. Please use a modern browser like Chrome, Firefox, or Edge.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-4 mb-4">
-                        {!isRecording && !audioBlob && (
-                          <button
-                            onClick={startRecording}
-                            className="btn-snap-light px-6 py-3 rounded-lg font-bold uppercase tracking-wide flex items-center space-x-2"
-                          >
-                            <Mic className="w-5 h-5" />
-                            <span>Start Recording</span>
-                          </button>
-                        )}
-
-                        {isRecording && (
-                          <button
-                            onClick={stopRecording}
-                            className="px-6 py-3 bg-red-500 text-white rounded-lg font-bold uppercase tracking-wide flex items-center space-x-2 hover:bg-red-600 snap-transition"
-                          >
-                            <Square className="w-5 h-5" />
-                            <span>Stop</span>
-                          </button>
-                        )}
-
-                        {audioBlob && !isRecording && (
-                          <>
-                            <button onClick={reRecord} className="px-4 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg font-bold uppercase tracking-wide flex items-center space-x-2 hover:bg-gray-50 snap-transition">
-                              <RotateCcw className="w-5 h-5" />
-                              <span>Re-record</span>
-                            </button>
-                            {!uploadedUrl && (
-                              <button
-                                onClick={uploadAudio}
-                                disabled={loading}
-                                className="btn-snap-light px-6 py-3 rounded-lg font-bold uppercase tracking-wide flex items-center space-x-2 disabled:opacity-50"
-                              >
-                                <Save className="w-5 h-5" />
-                                <span>{loading ? 'Uploading...' : 'Save Recording'}</span>
-                              </button>
-                            )}
-                          </>
-                        )}
+                {/* Stuck user recovery banner */}
+                {existingRecordingUrl && (
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 flex items-start space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-amber-900">You have a saved recording</p>
+                      <p className="text-sm text-amber-800 mt-1">Your greeting is already recorded and saved. You can complete setup now, or re-record from the recording page.</p>
+                      <div className="flex space-x-3 mt-3">
+                        <button
+                          onClick={handleCompleteFromBanner}
+                          disabled={completingSetup}
+                          className="btn-snap-light px-4 py-2 rounded-lg font-bold uppercase tracking-wide text-sm flex items-center space-x-2 disabled:opacity-50"
+                        >
+                          {completingSetup ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                          <span>{completingSetup ? 'Completing...' : 'Complete Setup Now'}</span>
+                        </button>
+                        <button
+                          onClick={() => router.push('/setup/record')}
+                          className="px-4 py-2 border-2 border-gray-300 text-charcoal-text rounded-lg font-bold uppercase tracking-wide text-sm hover:bg-gray-50 snap-transition"
+                        >
+                          Go to Recording Page
+                        </button>
                       </div>
-
-                      {(isRecording || audioBlob) && (
-                        <div className="mb-4">
-                          <div className="flex items-center space-x-2">
-                            {isRecording && <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />}
-                            <span className="text-sm font-bold text-charcoal-text">{recordingTime}s / 30s</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                            <div className="bg-safety-orange h-2 rounded-full snap-transition" style={{ width: `${(recordingTime / 30) * 100}%` }} />
-                          </div>
-                        </div>
-                      )}
-
-                      {audioUrl && (
-                        <div className="mt-4">
-                          <audio controls src={audioUrl} className="w-full" />
-                        </div>
-                      )}
-
-                      {uploadedUrl && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4 flex items-center space-x-2">
-                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                          <span className="text-sm text-green-800 font-bold flex-1">Recording saved successfully!</span>
-                          <button onClick={() => { reRecord(); setUploadedUrl(null); }} className="text-sm text-safety-orange hover:text-[#E65F00] font-bold snap-transition">
-                            Change Recording
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {!uploadedUrl && (
-                  <p className="text-sm text-safety-orange font-bold">Please record and save your greeting before completing setup.</p>
+                    </div>
+                  </div>
                 )}
 
-                <div className="flex space-x-4">
-                  <button onClick={() => setStep(5)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
-                  <button
-                    onClick={handleComplete}
-                    disabled={loading || !uploadedUrl}
-                    className="btn-snap-light flex-1 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    <span>{loading ? 'Completing...' : 'Complete Setup'}</span>
-                  </button>
-                </div>
+                {/* Sub-step 1: Education */}
+                {scriptStep === 1 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-3">
+                      <Mic className="w-6 h-6 text-safety-orange" />
+                      <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Your Greeting Is Everything</h2>
+                    </div>
+
+                    <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-6 space-y-4" style={{ boxShadow: '0 0 15px rgba(255, 107, 0, 0.2)' }}>
+                      <p className="text-white font-medium leading-relaxed">
+                        When a contractor misses a call, the caller has already mentally moved on — they&apos;re about to dial the next guy on the list. A personal, warm greeting is what stops them in their tracks.
+                      </p>
+                      <p className="text-white font-medium leading-relaxed">
+                        We&apos;ve studied what works: callers who hear a real human voice are dramatically more likely to engage and wait for a callback. A generic &quot;please leave a message&quot; gets ignored. Your voice doesn&apos;t.
+                      </p>
+                      <div className="border-t border-safety-orange/40 pt-4">
+                        <p className="text-safety-orange font-bold text-sm uppercase tracking-wider mb-2">Here&apos;s the thing most people don&apos;t know:</p>
+                        <p className="text-white font-medium leading-relaxed">
+                          Leaving a message isn&apos;t even required — SnapCalls captures every caller&apos;s number automatically. But a great greeting dramatically increases the chance they stay engaged instead of moving on.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-5 space-y-3">
+                      <p className="text-sm font-bold text-charcoal-text uppercase tracking-wider">What makes a great greeting?</p>
+                      <ul className="space-y-2">
+                        {[
+                          'Uses your name — makes it personal, not robotic',
+                          'Mentions your specific trade — shows you know what you\'re doing',
+                          'Keeps it under 30 seconds — callers tune out longer recordings',
+                          'Ends with confidence — not "I\'ll try to call you back"',
+                        ].map((tip) => (
+                          <li key={tip} className="flex items-start space-x-2 text-sm text-charcoal-text">
+                            <span className="text-safety-orange font-bold mt-0.5">✓</span>
+                            <span>{tip}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="flex space-x-4">
+                      <button onClick={() => setStep(5)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
+                      <button
+                        onClick={() => setScriptStep(2)}
+                        className="btn-snap-light flex-1 px-6 py-3 rounded-lg font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
+                      >
+                        <Sparkles className="w-5 h-5" />
+                        <span>Build My Script</span>
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sub-step 2: Auto-generating */}
+                {scriptStep === 2 && (
+                  <GeneratingSubStep
+                    onGenerated={(script) => { setGreetingScript(script); setScriptStep(3); }}
+                    onError={(msg) => { setError(msg); setScriptStep(1); }}
+                  />
+                )}
+
+                {/* Sub-step 3: Review & Edit */}
+                {scriptStep === 3 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-3">
+                      <Mic className="w-6 h-6 text-safety-orange" />
+                      <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">Review Your Script</h2>
+                    </div>
+
+                    <p className="text-gray-600">We&apos;ve written a personal script based on your business profile. Read it out loud, edit anything that doesn&apos;t sound like you, then head to the recording page.</p>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-bold text-charcoal-text uppercase tracking-wider">Your Script</label>
+                        <div className="flex items-center space-x-3">
+                          <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+                            wordCount === 0 ? 'bg-gray-100 text-gray-500' :
+                            wordCount <= 60 ? 'bg-green-100 text-green-700' :
+                            wordCount <= 75 ? 'bg-amber-100 text-amber-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {wordCount === 0 ? '0 words' :
+                             wordCount <= 60 ? `✓ ${wordCount} words` :
+                             wordCount <= 75 ? `⚠ ${wordCount} words (a little long)` :
+                             `✗ ${wordCount} words (too long)`}
+                          </span>
+                          <button
+                            onClick={() => setScriptStep(2)}
+                            disabled={generatingScript}
+                            className="flex items-center space-x-1 text-sm text-safety-orange hover:text-[#E65F00] snap-transition font-bold disabled:opacity-50"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Regenerate</span>
+                          </button>
+                        </div>
+                      </div>
+                      <textarea
+                        value={greetingScript}
+                        onChange={(e) => setGreetingScript(e.target.value)}
+                        className="input-snap w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition text-base leading-relaxed"
+                        rows={6}
+                        placeholder="Your script will appear here..."
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Target: 60 words or fewer — comfortably spoken in 20–30 seconds.</p>
+                    </div>
+
+                    <div className="flex space-x-4">
+                      <button onClick={() => setScriptStep(1)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-charcoal-text rounded-lg hover:bg-gray-50 font-bold uppercase tracking-wide snap-transition">Back</button>
+                      <button
+                        onClick={handleSaveScriptAndRecord}
+                        disabled={loading || !greetingScript.trim()}
+                        className="btn-snap-light flex-1 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide flex items-center justify-center space-x-2"
+                      >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
+                        <span>{loading ? 'Saving...' : 'Save & Go to Recording'}</span>
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

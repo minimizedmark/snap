@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { fromDecimal, formatCurrency } from '@/lib/pricing';
-import { Phone, DollarSign, MessageSquare, TrendingUp } from 'lucide-react';
+import { Phone, DollarSign, MessageSquare, TrendingUp, ArrowRight } from 'lucide-react';
+import { formatPhoneNumber } from '@/lib/twilio';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -76,6 +77,27 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Welcome back to Snap Calls!</p>
+      </div>
+
+      {/* Forwarding Number Card */}
+      <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-6" style={{ boxShadow: '0 0 15px rgba(255, 107, 0, 0.15)' }}>
+        <p className="text-xs font-bold text-safety-orange uppercase tracking-widest mb-1">Your Forwarding Number</p>
+        {user.twilioConfig?.phoneNumber ? (
+          <>
+            <p className="text-4xl font-bold text-white tracking-wider mb-3">
+              {formatPhoneNumber(user.twilioConfig.phoneNumber)}
+            </p>
+            <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <ArrowRight className="w-4 h-4 text-safety-orange flex-shrink-0" />
+              <span>Forward your existing phone to this number — every missed call gets handled automatically.</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xl font-bold text-gray-400 mb-2">Assigning your number...</p>
+            <p className="text-sm text-gray-500">Your forwarding number is being assigned. Check back shortly or watch your email.</p>
+          </>
+        )}
       </div>
 
       {/* Stats Grid */}
