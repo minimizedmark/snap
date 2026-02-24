@@ -47,13 +47,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, testAccount: true, newBalance });
     }
 
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('❌ STRIPE_SECRET_KEY is not set');
+      return NextResponse.json({ error: 'Payment processing is not configured. Contact support.' }, { status: 500 });
+    }
+
     // Get or create Stripe customer
     let stripeCustomer = await prisma.stripeCustomer.findUnique({
       where: { userId: session.user.id },
     });
 
     if (!stripeCustomer) {
-      const customerId = await createStripeCustomer(session.user.email!);
+      let customerId: string;
+      try {
+        customerId = await createStripeCustomer(session.user.email!);
+      } catch (err) {
+        console.error('❌ Failed to create Stripe customer:', err instanceof Error ? err.message : String(err));
+        return NextResponse.json({ error: 'Failed to set up payment profile. Please contact support.' }, { status: 500 });
+      }
       stripeCustomer = await prisma.stripeCustomer.create({
         data: {
           userId: session.user.id,
@@ -63,24 +74,31 @@ export async function POST(req: NextRequest) {
     }
 
     // Create payment intent
-    const { clientSecret, paymentIntentId } = await createPaymentIntent(
-      amount,
-      stripeCustomer.stripeCustomerId,
-      {
-        userId: session.user.id,
-        type: 'wallet_deposit',
-        amount: amount.toString(),
-      }
-    );
+    let clientSecret: string;
+    let paymentIntentId: string;
+    try {
+      ({ clientSecret, paymentIntentId } = await createPaymentIntent(
+        amount,
+        stripeCustomer.stripeCustomerId,
+        {
+          userId: session.user.id,
+          type: 'wallet_deposit',
+          amount: amount.toString(),
+        }
+      ));
+    } catch (err) {
+      console.error('❌ Failed to create payment intent:', err instanceof Error ? err.message : String(err));
+      return NextResponse.json({ error: 'Failed to initialize payment. Please try again or contact support.' }, { status: 500 });
+    }
 
     return NextResponse.json({
       clientSecret,
       paymentIntentId,
     });
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    console.error('❌ Unexpected error in deposit route:', error instanceof Error ? error.message : String(error));
     return NextResponse.json(
-      { error: 'Failed to create payment intent' },
+      { error: 'An unexpected error occurred. Please try again or contact support.' },
       { status: 500 }
     );
   }
