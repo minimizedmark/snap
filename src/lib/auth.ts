@@ -113,7 +113,6 @@ export async function getUserSession(userId: string) {
         twilioConfig: true,
         businessSettings: true,
         wallet: true,
-        companyProfile: true,
       },
     });
 
@@ -127,7 +126,6 @@ export async function getUserSession(userId: string) {
       timezone: user.timezone,
       isActive: user.isActive,
       hasCompletedOnboarding: !!(user.twilioConfig && user.businessSettings),
-      hasCompletedSetup: !!(user.companyProfile?.onboardingComplete),
       walletBalance: user.wallet ? user.wallet.balance : null,
     };
   } catch (error) {

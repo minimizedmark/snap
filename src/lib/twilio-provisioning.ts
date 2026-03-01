@@ -82,21 +82,6 @@ export async function acquireNumber(params: {
 
   console.log('🔍 Acquiring number:', { userId, requestedAreaCode, country, isSnapLine });
 
-  // Dev/test mode: assign a fake number when Twilio admin credentials are not configured
-  if (!process.env.TWILIO_ADMIN_ACCOUNT_SID || !process.env.TWILIO_ADMIN_AUTH_TOKEN) {
-    const areaCodePart = requestedAreaCode || '555';
-    const randomSuffix = Math.floor(1000000 + Math.random() * 9000000).toString().slice(0, 7);
-    const testNumber = `+1${areaCodePart}${randomSuffix}`;
-    console.log('🧪 Dev mode: assigning test number (no Twilio admin credentials):', testNumber);
-    return {
-      phoneNumber: testNumber,
-      source: 'pool',
-      isRequestedAreaCode: !!requestedAreaCode,
-      isNonRegional: false,
-      isTemp: false,
-    };
-  }
-
   // Step 1: Try pool inventory with requested area code
   if (requestedAreaCode) {
     try {
@@ -196,10 +181,13 @@ export async function purchaseTwilioNumber(areaCode?: string, country: 'US' | 'C
 
   const numberToPurchase = availableNumbers[0].phoneNumber;
 
-  // Purchase the number with webhooks pre-configured
+  // Purchase the number with webhooks pre-configured.
+  // voiceUrl points to /api/voice — the TwiML handler that plays the
+  // customer's greeting and starts the recording. The recording callback
+  // then fires /api/webhooks/twilio/call for billing/AI/SMS processing.
   const purchasedNumber = await client.incomingPhoneNumbers.create({
     phoneNumber: numberToPurchase,
-    voiceUrl: `${baseUrl}/api/webhooks/twilio/call`,
+    voiceUrl: `${baseUrl}/api/voice`,
     voiceMethod: 'POST',
     statusCallback: `${baseUrl}/api/webhooks/twilio/status`,
     statusCallbackMethod: 'POST',
@@ -231,7 +219,7 @@ async function purchaseNonRegionalNumber(country: 'US' | 'CA' = 'US'): Promise<s
   // Purchase the number with webhooks pre-configured
   const purchasedNumber = await client.incomingPhoneNumbers.create({
     phoneNumber: numberToPurchase,
-    voiceUrl: `${baseUrl}/api/webhooks/twilio/call`,
+    voiceUrl: `${baseUrl}/api/voice`,
     voiceMethod: 'POST',
     statusCallback: `${baseUrl}/api/webhooks/twilio/status`,
     statusCallbackMethod: 'POST',

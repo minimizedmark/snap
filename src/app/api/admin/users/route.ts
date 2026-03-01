@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { fromDecimal, toDecimal } from '@/lib/pricing';
+import { creditWallet } from '@/lib/wallet';
+import { isAdminAuthenticated } from '@/lib/admin-auth';
 
 /**
  * Get users with filtering and pagination
  * GET /api/admin/users?filter=...&page=...&limit=...
  */
 export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get('filter') || 'all';
@@ -38,7 +44,7 @@ export async function GET(req: NextRequest) {
         where.subscriptionStatus = 'paused';
         break;
       case 'low-balance':
-        where.wallet = { balance: { lt: 500 } }; // Less than $5
+        where.wallet = { balance: { lt: toDecimal(5.0) } }; // Less than $5
         break;
       case 'approaching-upgrade':
         where.AND = [
@@ -118,6 +124,10 @@ export async function GET(req: NextRequest) {
  * POST /api/admin/users
  */
 export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { userId, action, data } = await req.json();
 
@@ -151,38 +161,14 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           );
         }
-        
-        const wallet = await prisma.wallet.findUnique({
-          where: { userId },
-        });
-        
-        if (!wallet) {
-          return NextResponse.json(
-            { error: 'Wallet not found' },
-            { status: 404 }
-          );
-        }
 
-        const currentBalanceCents = fromDecimal(wallet.balance); // Already in cents
-        const amountCents = amount * 100; // Convert dollars to cents
-        const newBalanceCents = currentBalanceCents + amountCents;
-        
-        await prisma.wallet.update({
-          where: { userId },
-          data: {
-            balance: toDecimal(newBalanceCents),
-          },
-        });
-        
-        // Log transaction
-        await prisma.walletTransaction.create({
-          data: {
-            userId,
-            amount: toDecimal(amountCents),
-            type: 'CREDIT',
-            description: 'Admin credit',
-            balanceAfter: toDecimal(newBalanceCents),
-          },
+        // creditWallet() handles atomic update + transaction log in one call.
+        // Previously this block did raw Prisma updates with a *100 multiply
+        // (system stores dollars, not cents) — would credit 100x the intended amount.
+        await creditWallet({
+          userId,
+          amount,
+          description: 'Admin credit',
         });
         break;
 

@@ -1,154 +1,103 @@
 export const metadata = {
-  title: 'Terms of Service | Snap Calls',
+  title: 'Terms of Service',
   description: 'Snap Calls Terms of Service',
 };
 
 export default function TermsOfServicePage() {
   return (
-    <div className="min-h-screen bg-light-grey flex flex-col">
-      <header className="bg-deep-black border-b-4 border-safety-orange">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <a href="/" className="text-white font-bold text-xl uppercase tracking-widest hover:text-safety-orange transition-colors">
-            Snap Calls
-          </a>
-        </div>
-      </header>
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-6 py-12">
+        <h1 className="text-3xl font-bold text-gray-900">Terms of Service</h1>
+        <p className="mt-4 text-sm text-gray-500">Effective date: February 5, 2026</p>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
-        <h1 className="text-3xl font-bold text-deep-black uppercase tracking-wide mb-1">Terms of Service</h1>
-        <p className="text-sm text-gray-500 font-medium mb-10">Last Updated: February 18, 2026</p>
+        <section className="mt-8 space-y-4 text-gray-700">
+          <p>
+            These Terms of Service ("Terms") govern your access to and use of Snap Calls (the
+            "Service"). By accessing or using the Service, you agree to be bound by these Terms.
+            If you do not agree, do not use the Service.
+          </p>
 
-        <div className="bg-white border-4 border-safety-orange rounded-xl p-8 space-y-8" style={{ boxShadow: '0 4px 20px rgba(255, 107, 0, 0.15)' }}>
+          <h2 className="text-xl font-semibold text-gray-900">1. The Service</h2>
+          <p>
+            Snap Calls provides call handling and automated customer communication tools. We may
+            update or change the Service at any time.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">1. Introduction &amp; Scope</h2>
-            <p className="text-charcoal-text font-medium">
-              These terms govern your use of SnapCalls AI-powered missed call response services. Automation Overlord Inc. operates the entity known as SnapCalls and Snapline and provides phone number assignment, custom greeting playback, and automated SMS response services to business customers (&ldquo;Customer&rdquo;).
-            </p>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">2. Eligibility</h2>
+          <p>
+            You must be at least 18 years old and able to form a binding contract to use the
+            Service.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">2. Service Description &amp; Usage</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p><span className="font-bold">Service Overview:</span> SnapCalls provides phone numbers that play custom greetings and generate AI-powered SMS responses to missed calls. Customers forward their existing business number to their assigned SnapCalls number. Snapline is a VoIP phone service providing local phone services.</p>
-              <p><span className="font-bold">Pricing:</span> Standard rate is $0.99 per AI response. Lower rates available with larger wallet deposits as displayed at time of purchase. Snapline subscription is $20.00 per month.</p>
-              <p><span className="font-bold">Lawful Use:</span> Service must be used for legitimate business communications only. Prohibited uses include spam, adult content, harassment, fraud, or any illegal activities.</p>
-              <p><span className="font-bold">Authorized Users:</span> Only Customer and authorized employees may use the service.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">3. Accounts and Security</h2>
+          <p>
+            You are responsible for maintaining the confidentiality of your account credentials
+            and for all activity under your account. Notify us immediately of any unauthorized
+            use.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">3. Phone Number Ownership &amp; Portability</h2>
-            <ul className="list-disc list-inside space-y-2 text-charcoal-text font-medium">
-              <li>All phone numbers provided remain the exclusive property of SnapCalls.</li>
-              <li>Numbers are licensed for service use only — no ownership rights transfer.</li>
-              <li>Numbers may be reclaimed for non-payment, terms violations, or business reasons.</li>
-              <li>Customer may not transfer, sell, or assign numbers to third parties.</li>
-              <li>Number portability subject to carrier restrictions and applicable regulations.</li>
-            </ul>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">4. Acceptable Use</h2>
+          <p>
+            You agree not to misuse the Service or use it for unlawful, harmful, or abusive
+            activity, including spam, fraud, or harassment.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">4. Billing &amp; Payment Terms</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p><span className="font-bold">Prepaid Wallet System:</span> Service requires prepaid wallet balance. Usage charges deducted automatically at published rates.</p>
-              <p><span className="font-bold">Payment Terms:</span> Wallet deposits due immediately. Deposit bonuses applied as displayed at purchase.</p>
-              <p><span className="font-bold">Non-Refundable:</span> Wallet credits are non-refundable.</p>
-              <p><span className="font-bold">Late Fees:</span> Past due amounts subject to a 2.0% monthly service charge.</p>
-              <p><span className="font-bold">Taxes:</span> Customer responsible for all applicable taxes and regulatory fees.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">5. Payments and Billing</h2>
+          <p>
+            Paid features may require fees and taxes. Payments are non-refundable except as
+            required by law or explicitly stated. You authorize us to charge your payment method
+            for applicable fees.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">5. Account Status &amp; Number Reassignment</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p><span className="font-bold">Active Account Requirements:</span> Accounts must maintain a positive wallet balance for continued service.</p>
-              <p><span className="font-bold">Inactive Accounts:</span> If wallet balance remains $0.00 for 45 consecutive days, account becomes inactive and service terminates.</p>
-              <p><span className="font-bold">Number Reassignment:</span> Phone numbers from inactive accounts may be immediately reassigned to new customers. No refunds or compensation for lost numbers due to account inactivity.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">6. Phone Numbers</h2>
+          <p>
+            Phone numbers provisioned through the Service are owned by Snap Calls and may be
+            reassigned if your account is paused, terminated, or inactive, or if your wallet
+            balance remains at $0 for 30 consecutive days.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">6. Equipment &amp; Technical Requirements</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p><span className="font-bold">Customer Premise Equipment:</span> Customer responsible for compatible phone system and internet connectivity.</p>
-              <p><span className="font-bold">Provider Equipment:</span> SnapCalls maintains all server infrastructure and AI systems.</p>
-              <p><span className="font-bold">Access:</span> Customer must provide reasonable access for technical support when requested.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">7. Third-Party Services</h2>
+          <p>
+            The Service may integrate with third-party providers (e.g., telephony and payment
+            processors). Your use of those services is subject to their terms.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">7. Service Levels &amp; Support</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p><span className="font-bold">Uptime Target:</span> 99.5% uptime goal for voice services (not guaranteed).</p>
-              <p><span className="font-bold">Response Time:</span> AI responses typically generated within 5 minutes of a missed call.</p>
-              <p><span className="font-bold">Support Hours:</span> Technical support available during normal business hours.</p>
-              <p><span className="font-bold">Maintenance:</span> Scheduled maintenance with advance notice when possible.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">8. Data and Privacy</h2>
+          <p>
+            Our Privacy Policy explains how we collect and use information. By using the Service,
+            you agree to our data practices.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">8. Termination &amp; Suspension</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p><span className="font-bold">Termination by Customer:</span> 30 days written notice required. No refunds for unused wallet credits.</p>
-              <p><span className="font-bold">Termination by Provider:</span> Immediate termination permitted for non-payment, terms violations, or unlawful use.</p>
-              <p><span className="font-bold">Effect of Termination:</span> All phone numbers revert to SnapCalls. Customer data deleted within 90 days.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">9. Termination</h2>
+          <p>
+            You may stop using the Service at any time. We may suspend or terminate access if you
+            violate these Terms or if required to protect the Service.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">9. Liability &amp; Indemnification</h2>
-            <div className="space-y-3 text-charcoal-text font-medium">
-              <p className="font-bold uppercase">Limitation of Liability: Provider not liable for special, indirect, or consequential damages including lost business opportunities.</p>
-              <p><span className="font-bold">Service Disclaimer:</span> AI responses are automated and may contain errors. No guarantee of message delivery or accuracy.</p>
-              <p><span className="font-bold">Customer Indemnification:</span> Customer indemnifies SnapCalls against claims arising from Customer&apos;s use of the service.</p>
-            </div>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">10. Disclaimers</h2>
+          <p>
+            The Service is provided "as is" without warranties of any kind. We do not guarantee
+            uninterrupted or error-free operation.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">10. Force Majeure</h2>
-            <p className="text-charcoal-text font-medium">
-              Neither party is liable for delays due to circumstances beyond reasonable control, including natural disasters, government actions, or network outages.
-            </p>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">11. लिमitation of Liability</h2>
+          <p>
+            To the maximum extent permitted by law, Snap Calls will not be liable for indirect,
+            incidental, or consequential damages, or loss of profits, data, or goodwill.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">11. Changes to Terms</h2>
-            <p className="text-charcoal-text font-medium">
-              SnapCalls may modify these terms at any time with 30 days&apos; notice. Continued use constitutes acceptance. Material changes require email notification.
-            </p>
-          </section>
+          <h2 className="text-xl font-semibold text-gray-900">12. Changes to Terms</h2>
+          <p>
+            We may update these Terms from time to time. Continued use of the Service after
+            changes become effective constitutes acceptance of the updated Terms.
+          </p>
 
-          <section>
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">12. Governing Law &amp; Disputes</h2>
-            <p className="text-charcoal-text font-medium">
-              These terms are governed by the laws of Alberta. Disputes resolved through binding arbitration in Canada.
-            </p>
-          </section>
-
-          <section className="border-t-2 border-gray-100 pt-6">
-            <h2 className="text-lg font-bold text-deep-black uppercase tracking-wide mb-2">Contact</h2>
-            <div className="text-charcoal-text font-medium space-y-1">
-              <p>Automation Overlord Inc.</p>
-              <p>
-                <a href="mailto:mark@smartbizai.store" className="text-safety-orange font-bold hover:underline">
-                  mark@smartbizai.store
-                </a>
-              </p>
-              <p>+1 (780) 964-6752</p>
-            </div>
-          </section>
-
-        </div>
-      </main>
-
-      <footer className="border-t-4 border-safety-orange mt-12 bg-deep-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-white">
-            <p className="font-bold uppercase tracking-wider">&copy; {new Date().getFullYear()} Snap Calls. Never miss another customer.</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+          <h2 className="text-xl font-semibold text-gray-900">13. Contact</h2>
+          <p>
+            For questions, contact us at support@snappcalls.app.
+          </p>
+        </section>
+      </div>
+    </main>
   );
 }

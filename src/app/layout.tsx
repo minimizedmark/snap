@@ -4,7 +4,7 @@ import { Providers } from '@/components/providers';
 
 export const metadata: Metadata = {
   title: 'Snap Calls - Never Miss Another Customer',
-  description: "It's a snap to never miss a call.  A.I. automated missed call responses for your business.",
+  description: "It's a snap to never miss a call. Automated missed call responses for your business.",
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

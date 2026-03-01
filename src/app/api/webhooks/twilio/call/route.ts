@@ -1,47 +1,68 @@
 import { NextRequest } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/prisma';
 import { calculateCallCost, PRICING, toDecimal, fromDecimal } from '@/lib/pricing';
-import { debitWallet, shouldSendLowBalanceAlert, recordLowBalanceAlert } from '@/lib/wallet';
-import { sendOwnerNotification, normalizePhoneNumber } from '@/lib/twilio';
+import { debitWallet, getWalletBalance, checkAndRecordLowBalanceAlert, InsufficientBalanceError } from '@/lib/wallet';
+import { sendOwnerNotification, normalizePhoneNumber, validateTwilioSignature } from '@/lib/twilio';
 import { sendSmsFromNumber } from '@/lib/twilio-provisioning';
 import { sendLowBalanceAlertEmail, sendMissedCallNotificationEmail } from '@/lib/email';
-import { transcribeVoicemail, generateCallResponse } from '@/lib/ai';
-import {
-  isWithinBusinessHours,
-  formatBusinessHours,
-  substituteMessageVariables,
-} from '@/lib/utils';
+import { isWithinBusinessHours, formatBusinessHours } from '@/lib/utils';
+import { transcribeVoicemail } from '@/lib/transcription';
+import { generateCallResponse } from '@/lib/ai-writer';
+import { env } from '@/lib/env';
 
 /**
  * THE MONEY PRINTER 💰
  * Critical webhook handler for Twilio missed call notifications
  * Must respond within 1 second with 200 OK
+ *
+ * SECURITY: Validates Twilio signature before any processing.
+ * Without this, anyone who finds the URL can drain wallets and generate
+ * fraudulent call logs for free. Not ideal.
  */
 export async function POST(req: NextRequest) {
-  // IMMEDIATE 200 OK RESPONSE
-  const response = new Response('OK', { status: 200 });
+  // Validate Twilio signature BEFORE doing anything else.
+  // Twilio signs every request with HMAC-SHA1 using your auth token.
+  // We must read the raw body first, then reconstruct it for validation.
+  const rawBody = await req.text();
 
-  // Process asynchronously (don't await)
-  processCallAsync(req).catch((error) => {
-    console.error('❌ Async call processing error:', error);
-    // TODO: Log to error monitoring service (Sentry, etc.)
+  const signature = req.headers.get('x-twilio-signature') ?? '';
+
+  // Build the full URL Twilio signed — must match exactly what Twilio sent to
+  const url = `${env.APP_URL}/api/webhooks/twilio/call`;
+
+  // Parse the form-encoded body into a params map for Twilio's validator
+  const params: Record<string, string> = {};
+  new URLSearchParams(rawBody).forEach((value, key) => {
+    params[key] = value;
   });
 
-  return response;
+  const isValid = validateTwilioSignature(signature, url, params);
+
+  if (!isValid) {
+    console.error('❌ Invalid Twilio signature on call webhook — rejecting request');
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  // IMMEDIATE 200 OK RESPONSE
+  // waitUntil tells Vercel to keep the lambda alive until processing completes.
+  // Without this, the runtime is killed the moment we return — mid-SMS, mid-debit.
+  waitUntil(
+    processCallAsync(params).catch((error) => {
+      console.error('❌ Async call processing error:', error);
+    })
+  );
+
+  return new Response('OK', { status: 200 });
 }
 
 /**
- * Processes the call asynchronously
+ * Processes the call asynchronously.
+ * Receives pre-parsed params because the raw body was already consumed
+ * during Twilio signature validation above.
  */
-async function processCallAsync(req: NextRequest) {
+async function processCallAsync(payload: Record<string, string>) {
   try {
-    // Parse webhook payload
-    const formData = await req.formData();
-    const payload: Record<string, string> = {};
-    formData.forEach((value, key) => {
-      payload[key] = value.toString();
-    });
-
     const {
       CallSid: twilioCallSid,
       From: callerNumber,
@@ -74,11 +95,9 @@ async function processCallAsync(req: NextRequest) {
         user: {
           include: {
             businessSettings: true,
-            messageTemplates: true,
             userFeatures: true,
             notificationSettings: true,
             wallet: true,
-            companyProfile: true,
           },
         },
       },
@@ -90,31 +109,28 @@ async function processCallAsync(req: NextRequest) {
     }
 
     const user = twilioConfig.user;
-    const isTestAccount = user.isTestAccount;
 
-    if (!user.businessSettings || !user.messageTemplates || !user.wallet) {
+    if (!user.businessSettings || !user.wallet) {
       console.error('❌ User not fully configured:', user.id);
       return;
     }
 
-    if (isTestAccount) {
-      console.log('🧪 Test account detected — all billing steps will be skipped:', user.email);
-    }
-
-    // Track regular calls for abuse prevention (BASIC plan only, skip for test accounts)
-    if (user.subscriptionType === 'BASIC' && !isTestAccount) {
+    // Track regular calls for abuse prevention (BASIC plan only)
+    // If user is using this number for regular calls (not just forwarding),
+    // they'll hit warning at 15 calls and suspension at 20 calls
+    if (user.subscriptionType === 'BASIC') {
       const { incrementRegularCallCount } = await import('@/lib/subscription');
       await incrementRegularCallCount(user.id);
     }
 
-    // Check wallet balance (minimum $1.00) — skip for test accounts
+    // Check wallet balance — must have at least MINIMUM_BALANCE to process any call
     const currentBalance = fromDecimal(user.wallet.balance);
 
-    if (!isTestAccount && currentBalance < PRICING.MINIMUM_BALANCE) {
+    if (currentBalance < PRICING.MINIMUM_BALANCE) {
       console.warn('⚠️  Insufficient balance for user:', user.id, 'Balance:', currentBalance);
 
-      // Send low balance alert
-      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance, PRICING.LOW_BALANCE_ALERTS[PRICING.LOW_BALANCE_ALERTS.length - 1]);
+      // Alert at MINIMUM_BALANCE level — wallet is below the floor to process any call
+      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance, PRICING.MINIMUM_BALANCE);
 
       return;
     }
@@ -142,68 +158,40 @@ async function processCallAsync(req: NextRequest) {
     // Check for voicemail
     const hasVoicemail = !!voicemailUrl;
 
-    // Determine message type
+    // Determine response type for logging/billing
     let responseType: string;
-    let messageTemplate: string;
-
     if (!isBusinessHours) {
       responseType = 'after_hours';
-      messageTemplate = user.messageTemplates.afterHoursResponse;
     } else if (hasVoicemail) {
       responseType = 'voicemail';
-      messageTemplate = user.messageTemplates.voicemailResponse;
     } else {
       responseType = 'standard';
-      messageTemplate = user.messageTemplates.standardResponse;
     }
 
-    // Substitute variables for default template
+    // STEP 1: Transcribe voicemail with Whisper if one was left.
+    // Transcription feeds into the AI writer for a contextual response.
+    // Hang-ups get null here — the AI writer handles that case differently.
+    let voicemailTranscript: string | null = null;
+    if (hasVoicemail && voicemailUrl) {
+      voicemailTranscript = await transcribeVoicemail(voicemailUrl);
+    }
+
+    // STEP 2: Generate personalized SMS via AI write bot.
+    // Self-hosted model server (or OpenAI fallback) uses business context +
+    // voicemail transcript (if any) to write a contextual, human-sounding reply.
     const formattedHours = formatBusinessHours(
       user.businessSettings.hoursStart,
       user.businessSettings.hoursEnd
     );
 
-    let messageSent = substituteMessageVariables(messageTemplate, {
+    const messageSent = await generateCallResponse({
       businessName: user.businessSettings.businessName,
+      industry: user.businessSettings.industry,
+      callerName,
       businessHours: formattedHours,
-      callerName: callerName || undefined,
+      isBusinessHours,
+      voicemailTranscript,
     });
-
-    // ── AI-powered contextual response ─────────────────────────────
-    // All calls with voicemail get AI transcription + personalized response
-    let voicemailTranscription: string | null = null;
-
-    if (hasVoicemail && voicemailUrl) {
-      try {
-        // Transcribe voicemail using GPT-4o Mini (cost included in $0.99/call)
-        const transcription = await transcribeVoicemail(voicemailUrl);
-        voicemailTranscription = transcription.text;
-
-        // Generate AI-powered response using Qwen3-4B
-        if (voicemailTranscription && !voicemailTranscription.startsWith('[')) {
-          const companyProfile = user.companyProfile;
-          const aiResponse = await generateCallResponse({
-            voicemailTranscription,
-            businessName: user.businessSettings.businessName,
-            businessHours: formattedHours,
-            isBusinessHours,
-            isVip,
-            callerName,
-            aiInstructions: (user.messageTemplates as any).aiInstructions,
-            defaultTemplate: messageSent,
-            businessType: companyProfile?.businessType || undefined,
-            primaryServices: companyProfile?.primaryServices || undefined,
-            emergencyProtocol: companyProfile?.emergencyProtocol || undefined,
-            responseTimeframe: companyProfile?.responseTimeframe || undefined,
-          });
-          messageSent = aiResponse; // Replace template with AI response
-          console.log('🤖 AI contextual response generated for call:', twilioCallSid);
-        }
-      } catch (aiError) {
-        console.error('⚠️  AI processing failed, using default template:', aiError);
-        // Fall through to default template (messageSent unchanged)
-      }
-    }
 
     // Check if caller is repeat caller (for recognition cost)
     const previousCalls = await prisma.callLog.count({
@@ -232,32 +220,31 @@ async function processCallAsync(req: NextRequest) {
       vipPriorityEnabled: features.vipPriorityEnabled,
       transcriptionEnabled: features.transcriptionEnabled,
       isRepeatCaller,
-      customerReplied: false, // Will be updated if customer replies
+      customerReplied: false,
     });
-
-    // Check balance again for total cost (skip for test accounts)
-    if (!isTestAccount && currentBalance < pricing.totalCost) {
-      console.warn('⚠️  Insufficient balance for call cost:', pricing.totalCost);
-      await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, currentBalance, PRICING.LOW_BALANCE_ALERTS[PRICING.LOW_BALANCE_ALERTS.length - 1]);
-      return;
-    }
 
     /**
      * BILLING PHILOSOPHY: Charge on attempt, not on success
-     * 
+     *
      * We always charge for the call even if SMS delivery fails because:
      * 1. We incurred Twilio costs attempting the service
      * 2. The user configured the service and requested the response
      * 3. Transient failures shouldn't let users game the system
-     * 
+     *
      * The flow is:
      * 1. Attempt SMS (may fail due to Twilio errors, invalid number, etc.)
      * 2. Always debit wallet regardless of SMS outcome
      * 3. Record both statuses in call log for transparency
-     * 4. If wallet debit fails, log for manual review (rare race condition)
+     * 4. If wallet debit fails due to insufficient funds, alert user and bail
+     * 5. If wallet debit fails for any other reason, log for manual review
+     *
+     * NOTE: We do NOT re-check balance here before the debit. The balance
+     * read at the top of this function is stale by this point (transcription +
+     * AI generation = several seconds of drift). debitWallet's atomic WHERE
+     * clause is the only reliable guard — it checks and debits in one DB op.
      */
 
-    // Attempt to send SMS - capture status but never return early
+    // Attempt to send SMS — capture status but never return early
     let smsStatus = 'pending';
     let smsMessageSid: string | null = null;
     let smsError: Error | null = null;
@@ -276,38 +263,68 @@ async function processCallAsync(req: NextRequest) {
       smsError = error as Error;
       console.error('❌ SMS send failed:', smsError.message);
       smsStatus = 'failed';
-      // Continue to billing - we attempted the service
+      // Continue to billing — we attempted the service
     }
 
-    // Deduct from wallet (atomic transaction) - skip for test accounts
+    // Deduct from wallet (atomic transaction) — ALWAYS attempt regardless of SMS status.
+    // debitWallet uses WHERE balance >= amount, so this is the real balance check.
     let balanceAfter: number = 0;
     let walletDebitStatus = 'pending';
 
-    if (isTestAccount) {
-      walletDebitStatus = 'skipped_test_account';
-      console.log(`🧪 Test account: skipping wallet debit of $${pricing.totalCost} for call: ${twilioCallSid}`);
-    } else {
-      try {
-        balanceAfter = await debitWallet({
+    try {
+      balanceAfter = await debitWallet({
+        userId: user.id,
+        amount: pricing.totalCost,
+        description: smsStatus === 'failed'
+          ? `Call from ${callerName || callerNumber} (SMS failed)`
+          : `Call from ${callerName || callerNumber}`,
+        referenceId: twilioCallSid,
+      });
+      walletDebitStatus = 'success';
+      console.log(`💰 Wallet debited: $${pricing.totalCost} (balance: $${balanceAfter})`);
+    } catch (walletError) {
+      walletDebitStatus = 'failed';
+
+      if (walletError instanceof InsufficientBalanceError) {
+        // Balance was drained by a concurrent call between our initial read and now.
+        // Fetch the real current balance for an accurate alert.
+        console.warn('⚠️  Insufficient balance at debit time (concurrent drain):', {
           userId: user.id,
-          amount: pricing.totalCost,
-          description: smsStatus === 'failed'
-            ? `Call from ${callerName || callerNumber} (SMS failed)`
-            : `Call from ${callerName || callerNumber}`,
-          referenceId: twilioCallSid,
+          requiredAmount: pricing.totalCost,
         });
-        walletDebitStatus = 'success';
-        console.log(`💰 Wallet debited: $${pricing.totalCost} (balance: $${balanceAfter})`);
-      } catch (walletError) {
-        walletDebitStatus = 'failed';
-        console.error('❌ CRITICAL: Wallet debit failed after SMS attempt:', walletError);
-        console.error(`   - User: ${user.id} (${user.email})`);
-        console.error(`   - Amount: $${pricing.totalCost}`);
-        console.error(`   - Call: ${twilioCallSid}`);
-        console.error(`   - SMS Status: ${smsStatus}`);
-        // TODO: Alert finance team for manual review
-        // Continue to create call log for audit trail
+        const freshBalance = await getWalletBalance(user.id);
+        await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, freshBalance, pricing.totalCost);
+        return; // Bail — SMS may have been attempted but we can't charge. Log separately if needed.
       }
+
+      // Unexpected wallet error — SMS may have been sent but wallet was NOT charged.
+      // Alert admin for manual review.
+      console.error('❌ CRITICAL: Wallet debit failed after SMS attempt:', walletError);
+      console.error(`   - User: ${user.id} (${user.email})`);
+      console.error(`   - Amount: $${pricing.totalCost}`);
+      console.error(`   - Call: ${twilioCallSid}`);
+      console.error(`   - SMS Status: ${smsStatus}`);
+      try {
+        const { Resend } = await import('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: `Snap Calls <${process.env.FROM_EMAIL}>`,
+          to: env.ADMIN_EMAIL,
+          subject: '🚨 BILLING FAILURE: SMS sent but wallet not charged',
+          html: `<p><strong>A call was processed and SMS sent, but the wallet debit failed.</strong></p>
+          <ul>
+            <li>User: ${user.email} (${user.id})</li>
+            <li>Amount owed: $${pricing.totalCost}</li>
+            <li>Twilio Call SID: ${twilioCallSid}</li>
+            <li>SMS Status: ${smsStatus}</li>
+            <li>Time: ${new Date().toISOString()}</li>
+          </ul>
+          <p>Manual wallet debit required.</p>`,
+        });
+      } catch (alertError) {
+        console.error('❌ Failed to send billing failure alert:', alertError);
+      }
+      // Continue to create call log for audit trail
     }
 
     // Create call log entry
@@ -321,7 +338,7 @@ async function processCallAsync(req: NextRequest) {
         isBusinessHours,
         hasVoicemail,
         voicemailUrl: voicemailUrl || null,
-        voicemailTranscription: voicemailTranscription, // AI transcription
+        voicemailTranscription: voicemailTranscript,
         responseType,
         messageSent,
         smsStatus,
@@ -350,39 +367,6 @@ async function processCallAsync(req: NextRequest) {
       });
     }
 
-    // Schedule sequences if enabled
-    if (features.sequencesEnabled) {
-      const now = new Date();
-      const sequences = [
-        {
-          sequenceNumber: 1,
-          scheduledAt: new Date(now.getTime() + 2 * 60 * 60 * 1000), // 2 hours
-          messageSent: 'Just checking in - were you able to get what you needed? Reply if you have questions.',
-        },
-        {
-          sequenceNumber: 2,
-          scheduledAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // 24 hours
-          messageSent: 'Hi again! Just wanted to follow up. Let us know if you need anything.',
-        },
-        {
-          sequenceNumber: 3,
-          scheduledAt: new Date(now.getTime() + 72 * 60 * 60 * 1000), // 72 hours
-          messageSent: 'Final follow-up - we\'re here if you need us!',
-        },
-      ];
-
-      for (const seq of sequences) {
-        await prisma.responseSequence.create({
-          data: {
-            callLogId: callLog.id,
-            sequenceNumber: seq.sequenceNumber,
-            scheduledAt: seq.scheduledAt,
-            messageSent: seq.messageSent,
-            status: 'scheduled',
-          },
-        });
-      }
-    }
 
     // Send notification to owner
     const notifSettings = user.notificationSettings;
@@ -422,13 +406,12 @@ async function processCallAsync(req: NextRequest) {
       });
     }
 
-    // Check for low balance alerts (skip for test accounts)
-    if (!isTestAccount) {
-      for (const alertLevel of PRICING.LOW_BALANCE_ALERTS) {
-        if (await shouldSendLowBalanceAlert(user.id, alertLevel)) {
-          await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, balanceAfter, alertLevel);
-          await recordLowBalanceAlert(user.id, alertLevel);
-        }
+    // Check for low balance alerts — atomic check+record prevents duplicate alerts
+    // from concurrent webhooks both passing the "should send?" check.
+    for (const alertLevel of PRICING.LOW_BALANCE_ALERTS) {
+      const shouldAlert = await checkAndRecordLowBalanceAlert(user.id, alertLevel);
+      if (shouldAlert) {
+        await sendLowBalanceAlert(user.id, user.email, user.businessSettings.businessName, balanceAfter, alertLevel);
       }
     }
 

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { releaseNumberToInventory } from '@/lib/number-inventory';
+import { PRICING, toDecimal } from '@/lib/pricing';
 
-const DAYS_EMPTY_WALLET = 45;
+const DAYS_EMPTY_WALLET = 30;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
@@ -19,8 +20,9 @@ export async function GET(req: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       where: {
-        isTestAccount: false,
-        wallet: { balance: 0 },
+        // Users below minimum balance can't process any call — treat as empty.
+        // Exact zero check missed users with $0.01 stuck in their wallet forever.
+        wallet: { balance: { lt: toDecimal(PRICING.MINIMUM_BALANCE) } },
         twilioConfig: { isNot: null },
       },
       include: {

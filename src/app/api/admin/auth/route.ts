@@ -1,12 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
+import { checkRateLimit, rateLimitKey, getClientIp } from '@/lib/rate-limit';
 
 /**
  * Admin authentication endpoint
  * POST /api/admin/auth
+ *
+ * Rate limited aggressively — this endpoint is the keys to the kingdom.
+ * 5 attempts per 15 minutes per IP. On the 6th attempt the request is
+ * rejected with 429 (unlike magic link, we DO reveal the rate limit here
+ * because admin login is not email-enumeration sensitive — there is only
+ * one admin and they know they exist).
  */
+const ADMIN_RATE_LIMIT = { limit: 5, windowMs: 15 * 60 * 1000 } as const;
+
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req);
+
+    const ipLimit = await checkRateLimit({
+      key: rateLimitKey('admin_login', 'ip', clientIp),
+      ...ADMIN_RATE_LIMIT,
+    });
+
+    if (!ipLimit.allowed) {
+      console.warn('Admin login rate limit exceeded:', { ip: clientIp });
+      return NextResponse.json(
+        { error: 'Too many attempts. Try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(ADMIN_RATE_LIMIT.windowMs / 1000)),
+          },
+        }
+      );
+    }
+
     const { password } = await req.json();
 
     if (!password) {
@@ -16,10 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash the provided password
     const hash = createHash('sha256').update(password).digest('hex');
-
-    // Compare with environment variable
     const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
     if (!adminPasswordHash) {
@@ -31,15 +57,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (hash !== adminPasswordHash) {
+      console.warn('Failed admin login attempt from IP:', clientIp);
       return NextResponse.json(
         { error: 'Invalid password' },
         { status: 401 }
       );
     }
 
-    // Set secure cookie
+    // Set secure httpOnly cookie containing the hash
     const response = NextResponse.json({ success: true });
-    
+
     response.cookies.set('admin_auth', hash, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

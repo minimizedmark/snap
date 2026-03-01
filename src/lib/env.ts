@@ -48,7 +48,7 @@ export function validateEnv(): void {
     'DATABASE_URL',
     'ENCRYPTION_KEY',
     'NEXTAUTH_SECRET',
-    'ADMIN_PASSWORD',
+    'ADMIN_PASSWORD_HASH',
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
     'TWILIO_ACCOUNT_SID',
@@ -86,8 +86,11 @@ export const env = Object.freeze({
   // Database
   DATABASE_URL: getRequiredEnv('DATABASE_URL', 'postgresql://localhost:5432/snapcalls_dev'),
   
-  // Encryption (32-byte hex key required — 64 hex chars)
-  ENCRYPTION_KEY: getRequiredEnv('ENCRYPTION_KEY', '0000000000000000000000000000000000000000000000000000000000000000'),
+  // Encryption (32-byte key required)
+  // Dev fallback is a valid 64-char hex key so validateEncryptionKey() passes without .env.
+  // Generate your own for production:
+  //   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ENCRYPTION_KEY: getRequiredEnv('ENCRYPTION_KEY', '0c859f62bd84ae7a2d144dbe96722a4fdbf0d3a7888bf9d8976021b388512f6e'),
   
   // NextAuth
   NEXTAUTH_SECRET: getRequiredEnv('NEXTAUTH_SECRET', 'nextauth-secret-dev-change-in-prod'),
@@ -111,20 +114,25 @@ export const env = Object.freeze({
   FROM_EMAIL: getOptionalEnv('FROM_EMAIL', 'dev@localhost'),
   
   // Admin
-  ADMIN_PASSWORD: getRequiredEnv('ADMIN_PASSWORD', 'admin-dev-password-change-me'),
+  // ADMIN_PASSWORD_HASH: SHA-256 hash of admin password.
+  // Generate with: node -e "console.log(require('crypto').createHash('sha256').update('yourpassword').digest('hex'))"
+  ADMIN_PASSWORD_HASH: getRequiredEnv('ADMIN_PASSWORD_HASH', ''),
   ADMIN_EMAIL: getOptionalEnv('ADMIN_EMAIL', 'admin@localhost'),
   ADMIN_PHONE: getOptionalEnv('ADMIN_PHONE', '+15555550000'),
   
+  // AI Write Bot — OpenAI-compatible endpoint (self-hosted or cloud)
+  // AI_BASE_URL: your model server base URL (e.g. http://localhost:11434/v1)
+  // AI_MODEL: model name to call (e.g. "qwen3-4b", "llama3", "gpt-4o-mini")
+  // AI_API_KEY: optional — only needed if your server requires auth
+  AI_BASE_URL: getOptionalEnv('AI_BASE_URL', ''),
+  AI_MODEL: getOptionalEnv('AI_MODEL', 'gpt-4o-mini'),
+  AI_API_KEY: getOptionalEnv('AI_API_KEY', ''),
+
+  // OpenAI (for Whisper transcription only)
+  OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY', ''),
+
   // Cron
   CRON_SECRET: getRequiredEnv('CRON_SECRET', 'cron-secret-dev-change-in-prod'),
-
-  // Demo access (sales tool — gates test account bypass)
-  DEMO_ACCESS_KEY: getOptionalEnv('DEMO_ACCESS_KEY', ''),
-  
-  // AI Services
-  OPENAI_API_KEY: getOptionalEnv('OPENAI_API_KEY', ''), // Whisper-1 voicemail transcription
-  DIALOGPT_ENDPOINT: getOptionalEnv('DIALOGPT_ENDPOINT', ''), // RunPod DialoGPT-medium endpoint
-  RUNPOD_API_KEY: getOptionalEnv('RUNPOD_API_KEY', ''), // RunPod API key for auth
   
   // Node env
   NODE_ENV: getOptionalEnv('NODE_ENV', 'development'),

@@ -1,12 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { fromDecimal } from '@/lib/pricing';
+import { isAdminAuthenticated } from '@/lib/admin-auth';
 
 /**
  * Admin metrics endpoint
  * GET /api/admin/metrics
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -32,7 +37,7 @@ export async function GET() {
       prisma.user.count({ where: { createdAt: { gte: monthStart } } }),
     ]);
 
-    // Abuse prevention / TOS enforcement tracking
+    // Auto-upgrade funnel
     const [
       usersAt10Calls,
       usersAt15Calls,

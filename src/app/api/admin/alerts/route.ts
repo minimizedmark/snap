@@ -1,11 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { checkSystemAlerts } from '@/lib/alerts';
+import { isAdminAuthenticated } from '@/lib/admin-auth';
 
 /**
  * Get current system alerts
  * GET /api/admin/alerts
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAdminAuthenticated(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const alerts = await checkSystemAlerts();
     

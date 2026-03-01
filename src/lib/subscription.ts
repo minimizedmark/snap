@@ -15,9 +15,9 @@ export interface SubscriptionResult {
 export async function checkAbuseThresholds(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
+    include: { 
       wallet: true,
-      assignedPhoneNumbers: true,
+      phoneNumber: true,
     },
   });
 
@@ -49,9 +49,9 @@ export async function checkAbuseThresholds(userId: string): Promise<void> {
 async function suspendForAbuseViolation(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
+    include: { 
       wallet: true,
-      assignedPhoneNumbers: true,
+      phoneNumber: true,
     },
   });
 
@@ -71,7 +71,7 @@ async function suspendForAbuseViolation(userId: string): Promise<void> {
     user.email,
     user.directCallsThisMonth,
     user.wallet?.balance,
-    user.assignedPhoneNumbers?.[0]?.phoneNumber
+    user.phoneNumber?.phoneNumber
   );
 }
 

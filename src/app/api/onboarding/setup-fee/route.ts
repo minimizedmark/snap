@@ -29,16 +29,8 @@ export async function POST() {
       );
     }
 
-    // Test account: skip wallet debit for setup fee
-    let newBalance: number;
-    if (user?.isTestAccount) {
-      console.log('🧪 Test account: skipping setup fee debit');
-      const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
-      newBalance = wallet ? Number(wallet.balance) : 0;
-    } else {
-      // Deduct $5 setup fee from wallet
-      newBalance = await processSetupFee(session.user.id);
-    }
+    // Deduct $5 setup fee from wallet
+    const newBalance = await processSetupFee(session.user.id);
 
     // Assign from inventory or purchase Twilio number
     const pooledNumber = await assignAvailableNumber(session.user.id);

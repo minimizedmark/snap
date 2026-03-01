@@ -18,9 +18,6 @@ model User {
   timezone  String   @default("America/New_York")
   isActive  Boolean  @default(true) @map("is_active")
   
-  // Test account flag - bypasses all payment features
-  isTestAccount        Boolean          @default(false) @map("is_test_account")
-
   // Subscription tracking
   setupFeePaid         Boolean          @default(false) @map("setup_fee_paid")
   subscriptionType     SubscriptionType @default(BASIC) @map("subscription_type")
@@ -45,7 +42,6 @@ model User {
   callLogs                CallLog[]
   assignedPhoneNumbers    PhoneNumberInventory[]
   pendingNumberRequests   PendingNumberRequest[]
-  companyProfile          CompanyProfile?
 
   @@map("users")
   @@schema("public")
@@ -136,10 +132,12 @@ model BusinessSettings {
   id           String   @id @default(cuid())
   userId       String   @unique @map("user_id")
   businessName String   @map("business_name")
+  industry     String   @default("general business") @map("industry")
   hoursStart   String   @map("hours_start") // TIME format "09:00"
   hoursEnd     String   @map("hours_end") // TIME format "17:00"
   daysOpen     Int[]    @map("days_open") // Array of days [1,2,3,4,5] (Monday=1)
   timezone     String
+  greetingUrl  String?  @map("greeting_url") // Supabase Storage public URL for recorded greeting audio
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -148,12 +146,11 @@ model BusinessSettings {
 }
 
 model MessageTemplates {
-  id                   String  @id @default(cuid())
-  userId               String  @unique @map("user_id")
-  standardResponse     String  @map("standard_response")
-  voicemailResponse    String  @map("voicemail_response")
-  afterHoursResponse   String  @map("after_hours_response")
-  aiInstructions       String? @map("ai_instructions") // PRO tier only - custom AI guidance for response generation
+  id                   String @id @default(cuid())
+  userId               String @unique @map("user_id")
+  standardResponse     String @map("standard_response")
+  voicemailResponse    String @map("voicemail_response")
+  afterHoursResponse   String @map("after_hours_response")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -375,67 +372,6 @@ model TemplateLibrary {
   @@schema("public")
 }
 
-model CompanyProfile {
-  id                   String   @id @default(cuid())
-  userId               String   @unique @map("user_id")
-
-  // Step 1: Business Basics
-  businessType         String?  @map("business_type")
-  primaryServices      String[] @map("primary_services")
-  serviceAreas         String[] @map("service_areas")
-
-  // Step 2: Operations
-  businessHours        Json?    @map("business_hours") // Per-day open/close/closed
-  emergencyServices    Boolean  @default(false) @map("emergency_services")
-  emergencyDefinition  String?  @map("emergency_definition")
-  responseTimeframe    String?  @map("response_timeframe")
-
-  // Step 3: Staff & Roles
-  staffMembers         Json?    @map("staff_members") // Array of {name, role}
-  callRoutingRules     Json?    @map("call_routing_rules")
-
-  // Step 4: Brand Voice
-  businessPersonality  String[] @map("business_personality")
-  keyMessages          String[] @map("key_messages")
-
-  // Step 5: Common Scenarios
-  commonCallReasons    String[] @map("common_call_reasons")
-  quoteHandling        String?  @map("quote_handling")
-  emergencyProtocol    String?  @map("emergency_protocol")
-  afterHoursProtocol   String?  @map("after_hours_protocol")
-
-  // Step 6: Greeting Script & Recording
-  greetingScript       String?  @map("greeting_script")
-  greetingAudioUrl     String?  @map("greeting_audio_url")
-
-  // Meta
-  currentStep          Int      @default(1) @map("current_step")
-  onboardingComplete   Boolean  @default(false) @map("onboarding_complete")
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("company_profiles")
-  @@schema("public")
-}
-
-model AdminMessageTemplate {
-  id          String   @id @default(cuid())
-  category    String   // emergency, quote_request, general_inquiry, appointment, complaint, after_hours
-  name        String
-  messageText String   @map("message_text")
-  variables   String[] // e.g. ["businessName", "callerName", "businessHours"]
-  version     Int      @default(1)
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@index([category, isActive])
-  @@map("admin_message_templates")
-  @@schema("public")
-}
-
 model ProcessedWebhook {
   id          String   @id @default(cuid())
   eventId     String   @unique @map("event_id")
@@ -443,5 +379,21 @@ model ProcessedWebhook {
   eventType   String   @map("event_type")
 
   @@map("ProcessedWebhook")
+  @@schema("public")
+}
+
+/**
+ * Sliding window rate limit attempts.
+ * Records every attempt (allowed or rejected) for a given key.
+ * Expired records are lazily deleted on each check — no cron needed.
+ * See src/lib/rate-limit.ts for full implementation details.
+ */
+model RateLimitAttempt {
+  id        String   @id @default(cuid())
+  key       String   // e.g. "magic_link:email:foo@bar.com" or "admin_login:ip:1.2.3.4"
+  timestamp DateTime @default(now())
+
+  @@index([key, timestamp])
+  @@map("rate_limit_attempts")
   @@schema("public")
 }

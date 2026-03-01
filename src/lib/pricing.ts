@@ -2,17 +2,11 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 // Pricing constants
 export const PRICING = {
-  // SnapCalls: $0.99 per call — all calls include contextual AI SMS
-  // Every call gets: voicemail transcription + AI-powered personalized response
+  // SnapCalls: $0.99 deducted per call
   // Effective cost to user is lower when they load wallet with bonuses:
   //   - $20 load (0% bonus): $0.99/call
   //   - $100 load (50% bonus): $0.66/call (they got 50% more credits)
-  SNAPCALLS: {
-    PRICE: 0.99,  // Amount deducted from wallet per call
-  },
-  TRANSCRIPTION: {
-    WHISPER_1: 0.006,  // Cost per minute for voicemail transcription (our cost, included in $0.99)
-  },
+  CALL_PRICE: 0.99,           // Amount deducted from wallet per call
   WALLET_DEPOSITS: {
     20: { bonus: 0, description: '0% bonus' },
     30: { bonus: 4.5, description: '15% bonus' },
@@ -29,11 +23,9 @@ export const PRICING = {
     DEFAULT_THRESHOLD: 10.0,
     DEFAULT_AMOUNT: 20.0,
   },
-  MINIMUM_BALANCE: 0.66,    // Minimum for cheapest call ($0.99 with 50% bonus)
+  MINIMUM_BALANCE: 0.66,    // Minimum for cheapest call (Basic $0.99 with max 50% bonus = $0.66)
   LOW_BALANCE_ALERTS: [10.0, 5.0, 2.0],
 } as const;
-
-
 
 /**
  * Parameters for calculating itemized call costs
@@ -71,37 +63,37 @@ export interface CallPricingResult {
 }
 
 /**
- * Calculates itemized call costs.
- * 
+ * Calculates itemized call costs based on enabled features.
+ *
  * Pricing breakdown:
- * - Base: $0.99 (includes AI transcription + contextual response)
+ * - Base: $0.99 per call
  * - Follow-up sequences: +$0.50 if enabled
  * - Caller recognition: +$0.25 if enabled AND repeat caller
  * - Two-way communication: +$0.50 if enabled
  * - VIP priority: +$0.50 if VIP caller (or +$0.25 if enabled but not VIP)
  * - Voicemail transcription: +$0.25 if enabled AND voicemail exists
- * 
+ *
  * Note: The actual cost to the user is lower when they loaded wallet with bonuses.
  * For example, with 50% bonus ($100 load gets $150 credits):
- *   - $0.99 deducted, but effective cost is $0.66
- * 
- * @param params - Call pricing parameters with feature flags
- * @returns Itemized cost breakdown with total
+ *   $0.99 deducted, but effective cost is $0.66
  */
 export function calculateCallCost(params: CallPricingParams): CallPricingResult {
-  const baseCost = PRICING.SNAPCALLS.PRICE;
+  const baseCost = PRICING.CALL_PRICE;
 
   const sequencesCost = params.sequencesEnabled ? 0.50 : 0;
-  
+
   const recognitionCost = (params.recognitionEnabled && params.isRepeatCaller) ? 0.25 : 0;
-  
+
   const twoWayCost = params.twoWayEnabled ? 0.50 : 0;
-  
+
   const vipPriorityCost = params.vipPriorityEnabled
     ? (params.isVip ? 0.50 : 0.25)
     : 0;
-  
-  const transcriptionCost = (params.transcriptionEnabled && params.hasVoicemail) ? 0.25 : 0;
+
+  // Whisper transcription cost is absorbed into the base $0.99 price.
+  // Actual Whisper cost is ~$0.006/min — not worth billing separately and
+  // punishes callers who leave voicemails (which is exactly what we want).
+  const transcriptionCost = 0;
 
   const totalCost = baseCost + sequencesCost + recognitionCost + twoWayCost + vipPriorityCost + transcriptionCost;
 
@@ -117,14 +109,14 @@ export function calculateCallCost(params: CallPricingParams): CallPricingResult 
 }
 
 /**
- * Gets the effective cost per call to the user based on their wallet bonus
- * Used for display purposes to show users their actual cost per call
- * 
+ * Gets the effective cost per call to the user based on their wallet bonus.
+ * Used for display purposes to show users their actual cost per call.
+ *
  * Example: User loads $100, gets $150 (50% bonus)
  * - $0.99 deducted / 1.5 = $0.66 effective cost
  */
 export function getEffectiveCallCost(bonusPercentage: number): number {
-  return PRICING.SNAPCALLS.PRICE / (1 + bonusPercentage);
+  return PRICING.CALL_PRICE / (1 + bonusPercentage);
 }
 
 /**

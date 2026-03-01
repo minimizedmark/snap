@@ -1,32 +1,49 @@
 import { NextRequest } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { prisma } from '@/lib/prisma';
-import { normalizePhoneNumber } from '@/lib/twilio';
+import { normalizePhoneNumber, validateTwilioSignature } from '@/lib/twilio';
 import { toDecimal } from '@/lib/pricing';
 import { debitWallet } from '@/lib/wallet';
+import { env } from '@/lib/env';
 
 /**
  * Handles incoming SMS messages for two-way conversations
+ *
+ * SECURITY: Validates Twilio signature before processing.
+ * Without this check anyone who knows the URL can trigger two-way billing
+ * charges against users without an actual customer reply.
  */
 export async function POST(req: NextRequest) {
-  // Return 200 OK immediately
-  const response = new Response('OK', { status: 200 });
+  // Validate Twilio signature before touching anything
+  const rawBody = await req.text();
+  const signature = req.headers.get('x-twilio-signature') ?? '';
+  const url = `${env.APP_URL}/api/webhooks/twilio/sms`;
 
-  // Process asynchronously
-  processIncomingSmsAsync(req).catch((error) => {
-    console.error('❌ Error processing incoming SMS:', error);
+  const params: Record<string, string> = {};
+  new URLSearchParams(rawBody).forEach((value, key) => {
+    params[key] = value;
   });
 
-  return response;
+  const isValid = validateTwilioSignature(signature, url, params);
+
+  if (!isValid) {
+    console.error('❌ Invalid Twilio signature on SMS webhook — rejecting request');
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  // Return 200 OK immediately
+  // waitUntil keeps the lambda alive until async processing finishes.
+  waitUntil(
+    processIncomingSmsAsync(params).catch((error) => {
+      console.error('❌ Error processing incoming SMS:', error);
+    })
+  );
+
+  return new Response('OK', { status: 200 });
 }
 
-async function processIncomingSmsAsync(req: NextRequest) {
+async function processIncomingSmsAsync(payload: Record<string, string>) {
   try {
-    const formData = await req.formData();
-    const payload: Record<string, string> = {};
-    formData.forEach((value, key) => {
-      payload[key] = value.toString();
-    });
-
     const {
       MessageSid: smsMessageSid,
       From: customerNumber,
@@ -195,8 +212,19 @@ async function processIncomingSmsAsync(req: NextRequest) {
 
       // Send email notification if enabled
       if (notifSettings.notifyEmail && notifSettings.emailAddress) {
-        // Email notification could be implemented here
-        console.log('📧 Email notification would be sent to:', notifSettings.emailAddress);
+        try {
+          const { sendMissedCallNotificationEmail } = await import('@/lib/email');
+          await sendMissedCallNotificationEmail(
+            notifSettings.emailAddress,
+            '', // businessName not loaded in this path — enrich if needed
+            customerNumber,
+            null,
+            'two_way_reply',
+            new Date()
+          );
+        } catch (error) {
+          console.error('❌ Failed to send owner email notification for reply:', error);
+        }
       }
     }
 

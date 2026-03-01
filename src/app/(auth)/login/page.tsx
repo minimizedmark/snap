@@ -67,39 +67,17 @@ function LoginForm() {
     setLoading(true);
     setError('');
 
-    const demoKey = searchParams.get('demo_key');
-
     try {
       const response = await fetch('/api/auth/send-magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, ...(demoKey ? { demoKey } : {}) }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send magic link');
-      }
-
-      // Dev mode: auto-login with returned token
-      if (data.token) {
-        const result = await signIn('magic-link', {
-          token: data.token,
-          redirect: false,
-        });
-        if (result?.ok) {
-          const userRes = await fetch('/api/user/session');
-          if (userRes.ok) {
-            const userData = await userRes.json();
-            if (userData.hasCompletedOnboarding === false) {
-              router.push('/onboarding');
-              return;
-            }
-          }
-          router.push('/dashboard');
-          return;
-        }
       }
 
       setSent(true);

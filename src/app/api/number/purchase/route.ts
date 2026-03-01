@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
     const { areaCode, country = 'US' } = body;
 
     const isSnapLine = user.subscriptionType === 'SNAPLINE';
-    const isTestAccount = user.isTestAccount;
 
     console.log('📞 Number purchase request:', {
       userId: user.id,
@@ -50,54 +49,38 @@ export async function POST(req: NextRequest) {
       areaCode: areaCode || 'any',
       country,
       isSnapLine,
-      isTestAccount,
     });
 
     /**
      * STEP 1: CHARGE WALLET FIRST
-     *
+     * 
      * We always charge before attempting number acquisition because:
      * 1. We control the wallet - refunds are trivial if needed
      * 2. Prevents race conditions where users get numbers without paying
      * 3. Twilio operations are external and unpredictable
-     *
-     * In dev/test mode (no Twilio admin credentials), skip the wallet charge.
-     * Also skip for test accounts regardless of environment.
      */
-    const isDevMode = !process.env.TWILIO_ADMIN_ACCOUNT_SID || !process.env.TWILIO_ADMIN_AUTH_TOKEN;
     let newBalance: number;
+    try {
+      newBalance = await debitWallet({
+        userId: user.id,
+        amount: PRICING.SETUP_FEE,
+        description: 'Phone number setup fee',
+        referenceId: `number_setup_${crypto.randomUUID()}`,
+      });
 
-    if (isDevMode || isTestAccount) {
-      if (isTestAccount) {
-        console.log('🧪 Test account: skipping wallet debit for number setup');
-      } else {
-        console.log('🧪 Dev mode: skipping wallet debit for number setup');
+      console.log('💰 Wallet debited:', {
+        userId: user.id,
+        amount: PRICING.SETUP_FEE,
+        newBalance,
+      });
+    } catch (error) {
+      if (error instanceof InsufficientBalanceError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 402 }
+        );
       }
-      const wallet = await prisma.wallet.findUnique({ where: { userId: user.id } });
-      newBalance = wallet ? Number(wallet.balance) : 0;
-    } else {
-      try {
-        newBalance = await debitWallet({
-          userId: user.id,
-          amount: PRICING.SETUP_FEE,
-          description: 'Phone number setup fee',
-          referenceId: `number_setup_${crypto.randomUUID()}`,
-        });
-
-        console.log('💰 Wallet debited:', {
-          userId: user.id,
-          amount: PRICING.SETUP_FEE,
-          newBalance,
-        });
-      } catch (error) {
-        if (error instanceof InsufficientBalanceError) {
-          return NextResponse.json(
-            { error: error.message },
-            { status: 402 }
-          );
-        }
-        throw error;
-      }
+      throw error;
     }
 
     /**
@@ -237,26 +220,6 @@ export async function POST(req: NextRequest) {
       isTemp,
       remainingBalance: newBalance,
     });
-
-    /**
-     * STEP 4.5: CREATE DEFAULT MESSAGE TEMPLATES
-     *
-     * Every user needs message templates for the call webhook to function.
-     * Create them here if they don't already exist.
-     */
-    const existingTemplates = await prisma.messageTemplates.findUnique({ where: { userId: user.id } });
-    if (!existingTemplates) {
-      const businessName = (await prisma.businessSettings.findUnique({ where: { userId: user.id } }))?.businessName || 'us';
-      await prisma.messageTemplates.create({
-        data: {
-          userId: user.id,
-          standardResponse: `Hey, you just called ${businessName}. We would have loved to help — what can we do for you?`,
-          voicemailResponse: `Hey, got your voicemail! We'll get back to you shortly. — ${businessName}`,
-          afterHoursResponse: `Hey, you just called ${businessName}. We're closed right now but we'll get back to you first thing. What can we help with?`,
-        },
-      });
-      console.log('✅ Default message templates created for user:', user.id);
-    }
 
     /**
      * STEP 5: SEND SUCCESS EMAIL

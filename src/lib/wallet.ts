@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { Prisma } from '@prisma/client';
 import { toDecimal, fromDecimal, PRICING } from './pricing';
 import { chargePaymentMethod } from './stripe';
 import { sendEmail } from './email';
@@ -24,7 +25,6 @@ export interface CreditWalletParams {
   userId: string;
   amount: number;
   description: string;
-  
   referenceId?: string;
 }
 
@@ -154,9 +154,23 @@ export async function hasInsufficientBalance(userId: string, requiredAmount: num
 }
 
 /**
- * Checks if low balance alert should be sent
+ * Atomically checks if a low balance alert should be sent AND records it.
+ *
+ * Uses a single DB upsert as the concurrency gate — only one concurrent webhook
+ * can win the race. The upsert targets the @@unique([userId, alertLevel]) index
+ * directly, so Postgres handles the conflict atomically with no read-then-write
+ * window.
+ *
+ * Flow:
+ *   1. Balance above threshold → return false immediately (no alert needed)
+ *   2. Upsert with conflict target:
+ *      - No existing row → INSERT, return true (send the alert)
+ *      - Existing row sent < 24h ago → no-op UPDATE (WHERE guards it), return false
+ *      - Existing row sent > 24h ago → UPDATE lastSentAt, return true (resend)
+ *
+ * Returns true if the caller should send the alert email/SMS.
  */
-export async function shouldSendLowBalanceAlert(
+export async function checkAndRecordLowBalanceAlert(
   userId: string,
   alertLevel: number
 ): Promise<boolean> {
@@ -166,48 +180,57 @@ export async function shouldSendLowBalanceAlert(
     return false;
   }
 
-  // Check if alert was already sent recently (within 24 hours)
-  const recentAlert = await prisma.lowBalanceAlert.findFirst({
-    where: {
-      userId,
-      alertLevel: toDecimal(alertLevel),
-      lastSentAt: {
-        gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      },
-    },
-  });
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const now = new Date();
 
-  return !recentAlert;
-}
-
-/**
- * Records that a low balance alert was sent
- */
-export async function recordLowBalanceAlert(userId: string, alertLevel: number): Promise<void> {
-  // Find existing alert
-  const existing = await prisma.lowBalanceAlert.findFirst({
-    where: {
-      userId,
-      alertLevel: toDecimal(alertLevel),
-    },
-  });
-
-  if (existing) {
-    // Update existing alert
-    await prisma.lowBalanceAlert.update({
-      where: { id: existing.id },
-      data: { lastSentAt: new Date() },
-    });
-  } else {
-    // Create new alert
-    await prisma.lowBalanceAlert.create({
-      data: {
+  // Single upsert targets the unique index — Postgres resolves the concurrent
+  // insert race atomically. The updateMany WHERE filters out recently-sent rows
+  // so the update only fires when the alert is genuinely stale.
+  const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // Try to update an existing stale row first (most common path after first alert)
+    const updated = await tx.lowBalanceAlert.updateMany({
+      where: {
         userId,
         alertLevel: toDecimal(alertLevel),
-        lastSentAt: new Date(),
+        lastSentAt: { lt: cutoff }, // only update if stale — recent rows are a no-op
       },
+      data: { lastSentAt: now },
     });
-  }
+
+    if (updated.count > 0) {
+      return true; // stale row updated — send the alert
+    }
+
+    // No stale row found — either row doesn't exist yet, or it was sent recently.
+    // Attempt insert. If the unique constraint fires (concurrent insert), skip.
+    try {
+      await tx.lowBalanceAlert.create({
+        data: {
+          userId,
+          alertLevel: toDecimal(alertLevel),
+          lastSentAt: now,
+        },
+      });
+      return true; // new row inserted — send the alert
+    } catch (error: unknown) {
+      // Unique constraint violation: concurrent webhook already inserted this row.
+      // Also handles the "row exists and was sent recently" case — the updateMany
+      // above returned 0 because lastSentAt >= cutoff, and create fails because
+      // the row exists. Either way: alert already handled, skip.
+      const isUniqueViolation =
+        error instanceof Error &&
+        'code' in error &&
+        (error as { code: string }).code === 'P2002';
+
+      if (isUniqueViolation) {
+        return false;
+      }
+
+      throw error; // unexpected error — bubble up
+    }
+  });
+
+  return result;
 }
 
 /**

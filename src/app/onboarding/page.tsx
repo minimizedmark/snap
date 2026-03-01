@@ -49,7 +49,7 @@ function PaymentForm({ onSuccess, amount, totalCredit }: { onSuccess: () => void
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide"
+        className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
       >
         {loading ? 'Processing...' : `Deposit $${amount} (Get $${totalCredit.toFixed(2)} credit)`}
       </button>
@@ -66,6 +66,7 @@ export default function OnboardingPage() {
   const [depositAmount, setDepositAmount] = useState(20);
 
   const [businessName, setBusinessName] = useState('');
+  const [industry, setIndustry] = useState('');
   const [hoursStart, setHoursStart] = useState('09:00');
   const [hoursEnd, setHoursEnd] = useState('17:00');
   const [areaCode, setAreaCode] = useState('');
@@ -91,7 +92,7 @@ export default function OnboardingPage() {
       const res = await fetch('/api/onboarding/business', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName, hoursStart, hoursEnd }),
+        body: JSON.stringify({ businessName, industry, hoursStart, hoursEnd }),
       });
 
       if (!res.ok) {
@@ -123,12 +124,6 @@ export default function OnboardingPage() {
 
       if (!res.ok) {
         setError(data?.error || 'Failed to start deposit');
-        return;
-      }
-
-      // Test account: wallet credited directly — skip Stripe form
-      if (data.testAccount) {
-        handlePaymentSuccess();
         return;
       }
 
@@ -218,6 +213,10 @@ export default function OnboardingPage() {
                   <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Business Name</label>
                   <input type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" placeholder="Acme HVAC" />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Industry / Type of Business</label>
+                  <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" placeholder="HVAC, Plumbing, Real Estate, Legal..." />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Opens At</label>
@@ -228,7 +227,7 @@ export default function OnboardingPage() {
                     <input type="time" value={hoursEnd} onChange={(e) => setHoursEnd(e.target.value)} className="input-snap w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-safety-orange focus:border-safety-orange snap-transition" />
                   </div>
                 </div>
-                <button onClick={handleBusinessNext} disabled={!businessName || loading} className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide">
+                <button onClick={handleBusinessNext} disabled={!businessName || !industry || loading} className="btn-snap-light w-full px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-bold uppercase tracking-wide">
                   {loading ? 'Saving...' : 'Continue'}
                 </button>
                 {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4"><p className="text-sm text-red-900">{error}</p></div>}
@@ -271,7 +270,7 @@ export default function OnboardingPage() {
                       </div>
                     </div>
                     <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-4 text-sm text-white" style={{boxShadow: '0 0 10px rgba(255, 107, 0, 0.2)'}}>
-                      <p className="mb-2 font-medium"><strong className="text-safety-orange uppercase tracking-wider">Important:</strong> Your Snap number is for <strong className="text-safety-orange">call forwarding only</strong> (forwards missed calls from your real phone).</p>
+                      <p className="mb-2 font-medium"><strong className="text-safety-orange uppercase tracking-wider">Important:</strong> Your Snap number is for <strong className="text-safety-orange">call forwarding only</strong> (forwards missed calls to your real phone).</p>
                       <p className="font-medium">If you use it for regular inbound/outbound calls, service will be suspended at 20 calls. To use as a full business phone line, upgrade to <strong className="text-safety-orange">SnapLine ($20/month)</strong> anytime.</p>
                       <p className="mt-3 font-medium">By continuing, you agree to our <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-safety-orange hover:underline font-bold">Terms of Service</a>.</p>
                     </div>
@@ -286,7 +285,7 @@ export default function OnboardingPage() {
                 ) : (
                   <>
                     {stripePromise ? (
-                      <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat', variables: { colorPrimary: '#FF6B00', colorBackground: '#ffffff', colorText: '#333333', colorDanger: '#df1b41', borderRadius: '6px', fontFamily: 'system-ui, sans-serif' }, rules: { '.Input': { border: '2px solid #e5e7eb', boxShadow: 'none' }, '.Input:focus': { border: '2px solid #FF6B00', boxShadow: '0 0 8px rgba(255, 107, 0, 0.2)' }, '.Label': { fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '12px', color: '#333333' } } } }}>
+                      <Elements stripe={stripePromise} options={{ clientSecret }}>
                         <PaymentForm onSuccess={handlePaymentSuccess} amount={depositAmount} totalCredit={totalCredit} />
                       </Elements>
                     ) : (
@@ -307,7 +306,6 @@ export default function OnboardingPage() {
                   <p className="text-sm text-white mb-2 font-bold uppercase tracking-wider">✓ Wallet loaded successfully!</p>
                   <p className="text-sm text-white font-medium">Now we will assign you a dedicated <strong>call forwarding number</strong>. The $5 setup fee will be deducted from your wallet.</p>
                   <p className="text-xs text-white mt-3 font-medium"><strong>Reminder:</strong> This number is for forwarding missed calls only. Want full phone service? Upgrade to SnapLine later!</p>
-                  <p className="text-xs text-white mt-2 font-medium"><strong>Note:</strong> If your wallet remains empty for 45 consecutive days, your account will be considered closed and your number will be returned to the pool for reassignment.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-charcoal-text mb-2 uppercase tracking-wider">Preferred Area Code (Optional)</label>
@@ -323,25 +321,15 @@ export default function OnboardingPage() {
               <div className="space-y-6">
                 <div className="flex items-center space-x-3 mb-6">
                   <CheckCircle className="w-6 h-6 text-safety-orange" />
-                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">You&apos;re all set!</h2>
+                  <h2 className="text-2xl font-bold text-deep-black uppercase tracking-wide">You are all set!</h2>
                 </div>
                 <div className="bg-safety-orange border-2 border-white rounded-lg p-6 text-center" style={{boxShadow: '0 0 20px rgba(255, 107, 0, 0.4)'}}>
                   <CheckCircle className="w-16 h-16 text-white mx-auto mb-4" style={{filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))'}} />
                   <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">Welcome to Snap Calls!</h3>
-                  <p className="text-white font-medium">Your account is ready. One last thing to activate it.</p>
+                  <p className="text-white mb-4 font-medium">Your forwarding number has been set up and is ready to start responding to missed calls.</p>
+                  <p className="text-sm text-white font-medium">Next: Customize your message templates in the dashboard.</p>
                 </div>
-
-                <div className="bg-deep-black border-2 border-safety-orange rounded-lg p-5 space-y-3" style={{boxShadow: '0 0 10px rgba(255, 107, 0, 0.15)'}}>
-                  <p className="text-safety-orange font-bold text-sm uppercase tracking-wider">Here&apos;s how it works:</p>
-                  <p className="text-white font-medium text-sm leading-relaxed">
-                    On your dashboard you&apos;ll find a <strong className="text-safety-orange">forwarding number</strong>. Just forward your existing phone to it — that&apos;s it.
-                  </p>
-                  <p className="text-white font-medium text-sm leading-relaxed">
-                    Every time someone calls you and you can&apos;t pick up, SnapCalls catches it and handles it automatically. <strong className="text-safety-orange">No app. No hardware. Takes 30 seconds to set up.</strong>
-                  </p>
-                </div>
-
-                <button onClick={() => router.push('/setup')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Continue Setup →</button>
+                <button onClick={() => router.push('/dashboard')} className="btn-snap-dark w-full px-6 py-3 rounded-lg font-bold uppercase tracking-wide">Go to Dashboard</button>
               </div>
             )}
           </div>

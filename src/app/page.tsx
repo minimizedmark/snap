@@ -65,7 +65,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-bold text-deep-black mb-3 uppercase tracking-wide">Pay As You Go</h3>
             <p className="text-charcoal-text font-medium">
-              99¢ a call at standard rates, down to as low as 67¢ based on discounts for higher wallet loads. No monthly fees, no contracts. Add funds to your wallet and only pay for what you use.
+              Only $1 per call. No monthly fees, no contracts. Add funds to your wallet and only pay for what you use.
             </p>
           </div>
 
@@ -79,8 +79,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="bg-white border-4 border-safety-orange p-8 rounded-xl relative" style={{boxShadow: '0 4px 20px rgba(255, 107, 0, 0.15)'}}>
-            <span className="absolute top-3 right-3 bg-safety-orange text-white text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">Coming Soon</span>
+          <div className="bg-white border-4 border-safety-orange p-8 rounded-xl" style={{boxShadow: '0 4px 20px rgba(255, 107, 0, 0.15)'}}>
             <div className="w-12 h-12 bg-safety-orange rounded flex items-center justify-center mb-4 border-2 border-white" style={{boxShadow: '0 0 10px rgba(255, 255, 255, 0.3)'}}>
               <Users className="w-6 h-6 text-white" />
             </div>
@@ -133,9 +132,6 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-white">
             <p className="font-bold uppercase tracking-wider">&copy; {new Date().getFullYear()} Snap Calls. Never miss another customer.</p>
-            <p className="mt-2 text-sm text-gray-400">
-              <a href="/terms" className="hover:text-safety-orange transition-colors">Terms of Service</a>
-            </p>
           </div>
         </div>
       </footer>
